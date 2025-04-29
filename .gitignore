@@ -1,0 +1,14 @@
+# 忽略所有CSV文件
+*.csv
+
+# 临时文件
+*.tmp
+*.temp
+
+# 缓存目录
+__pycache__/
+.cache/
+
+# 系统文件
+.DS_Store
+Thumbs.db 
