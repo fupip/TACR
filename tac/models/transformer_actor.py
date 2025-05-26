@@ -50,6 +50,7 @@ class TransformerActor(TrajectoryModel):
 
     def forward(self, states, actions, rewards, timesteps, attention_mask=None):
         batch_size, seq_length = states.shape[0], states.shape[1]
+        
 
         if attention_mask is None:
             # attention mask for GPT: 1 if can be attended to, 0 if not

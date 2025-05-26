@@ -57,6 +57,8 @@ def eval_test(
 
         episode_return += reward
         episode_length += 1
+        
+        print(f"episode_return: {episode_return}, episode_length: {episode_length}")
 
         if done:
             break
