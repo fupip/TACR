@@ -116,6 +116,7 @@ class StockPortfolioEnv(gym.Env):
         # print(self.day)
         self.terminal = self.day >= len(self.df.index.unique()) - 1
 
+        # 结束时输出结果
         if self.terminal:
             if not os.path.exists("results"):
                 os.makedirs("results")

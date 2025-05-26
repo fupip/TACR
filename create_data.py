@@ -8,7 +8,7 @@ from preprocessor.process_traj import trajectory
 import numpy as np
 import pickle
 import os
-
+from csi_data import get_csi_stock_data
 def create_data(variant):
     #Create datasets
     # DOW (2009-01-01 ~ 2020-09-24),
@@ -18,26 +18,27 @@ def create_data(variant):
     # HSI (2009-01-01 ~ 2021-12-31),
     # CSI (2009-01-01 ~ 2021-12-31)
 
-    if variant['dataset']=="dow":
-        df = YahooDownloader(start_date = '2009-01-01',
-                              end_date = '2020-09-24',
-                             ticker_list = config.DOW_TICKER).fetch_data()
-    elif variant['dataset']=="hightech":
-        df = YahooDownloader(start_date = '2006-10-20',
-                             end_date = '2013-11-21',
-                             ticker_list = config.HighTech_TICKER).fetch_data()
-    elif variant['dataset'] == "ndx":
-        df = YahooDownloader(start_date = '2009-01-01',
-                            end_date = '2021-12-31',
-                            ticker_list = config.NDX_TICKER).fetch_data()
-    elif variant['dataset'] == "mdax":
-        df = YahooDownloader(start_date = '2009-01-01',
-                            end_date = '2021-12-31',
-                            ticker_list = config.MDAX_TICKER).fetch_data()
-    elif variant['dataset'] == "csi":
-        df = YahooDownloader(start_date = '2009-01-01',
-                            end_date = '2021-12-31',
-                            ticker_list = config.CSI_TICKER).fetch_data()
+    # if variant['dataset']=="dow":
+    #     df = YahooDownloader(start_date = '2009-01-01',
+    #                           end_date = '2020-09-24',
+    #                          ticker_list = config.DOW_TICKER).fetch_data()
+    # elif variant['dataset']=="hightech":
+    #     df = YahooDownloader(start_date = '2006-10-20',
+    #                          end_date = '2013-11-21',
+    #                          ticker_list = config.HighTech_TICKER).fetch_data()
+    # elif variant['dataset'] == "ndx":
+    #     df = YahooDownloader(start_date = '2009-01-01',
+    #                         end_date = '2021-12-31',
+    #                         ticker_list = config.NDX_TICKER).fetch_data()
+    # elif variant['dataset'] == "mdax":
+    #     df = YahooDownloader(start_date = '2009-01-01',
+    #                         end_date = '2021-12-31',
+    #                         ticker_list = config.MDAX_TICKER).fetch_data()
+    # elif variant['dataset'] == "csi":
+    #     # df = YahooDownloader(start_date = '2009-01-01',
+    #     #                     end_date = '2025-05-18',
+    #     #                     ticker_list = config.CSI_TICKER).fetch_data()
+    df =  get_csi_stock_data()
 
     df.sort_values(['date','tic'],ignore_index=True).head()
 
@@ -54,6 +55,11 @@ def create_data(variant):
     list_date = list(pd.date_range(processed['date'].min(),processed['date'].max()).astype(str))
     combination = list(itertools.product(list_date,list_ticker))
 
+    # 分别列出combination 与processed 中 date 列的类型
+    print(type(combination[0][0]))
+    print(type(processed['date'].min()))
+    print(type(processed['date'].max()))
+    
     processed_full = pd.DataFrame(combination,columns=["date","tic"]).merge(processed,on=["date","tic"],how="left")
     processed_full = processed_full[processed_full['date'].isin(processed['date'])]
     processed_full = processed_full.sort_values(['date','tic'])
@@ -68,8 +74,8 @@ def create_data(variant):
         train = data_split(processed_full, '2006-10-20','2012-11-16')
         trade = data_split(processed_full, '2012-11-16','2013-11-21')
     else:
-        train = data_split(processed_full, '2009-01-01','2020-09-01')
-        trade = data_split(processed_full, '2020-09-01','2021-12-31')
+        train = data_split(processed_full, '2015-01-01','2024-05-18')
+        trade = data_split(processed_full, '2024-05-19','2025-05-20')
 
     if not os.path.exists("datasets"):
         os.makedirs("datasets")
@@ -81,8 +87,14 @@ def create_data(variant):
     ###################Create suboptimal trajectories########################
 
     train = pd.read_csv("datasets/"+variant['dataset']+"_train.csv", index_col=[0])
+    
+    # print(train.head())
+    # return
 
+    # 股票代码数量
     stock_dimension = len(train.tic.unique())
+    # 状态空间
+    # (O, H, L, C) * 股票代码数量 + 技术指标数量 * 股票代码数量
     state_space = 4 * stock_dimension + len(config.TECHNICAL_INDICATORS_LIST) * stock_dimension
     print(f"Stock Dimension: {stock_dimension}, State Space: {state_space}")
 
@@ -102,6 +114,7 @@ def create_data(variant):
         acs = []
 
         while True:
+            # stats ,reward,terminal,weights
             next_state, rew, new, ac = env.step(episode)
             obs.append(ob)
             term.append(new)
@@ -113,6 +126,7 @@ def create_data(variant):
                 break
 
         obs = np.array(obs)
+        print("obs.shape",obs.shape)
         rews = np.array(rews)
         term = np.array(term)
         acs = np.array(acs)

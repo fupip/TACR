@@ -1,4 +1,4 @@
-name: ny
+name: stock
 channels:
   - pytorch
   - defaults
@@ -176,4 +176,4 @@ dependencies:
     - wrds==3.1.2
     - yarl==1.8.1
     - yfinance==0.1.70
-prefix: /home/user/anaconda3/envs/ny
+

@@ -4,26 +4,10 @@ import torch.nn as nn
 import torch.nn.functional as F
 import copy
 import time
+from .critic import Critic
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
-class Critic(nn.Module):
-    def __init__(self, state_dim, action_dim):
-        super(Critic, self).__init__()
-        # Q architecture
-        self.l1 = nn.Linear(state_dim + action_dim, 512)
-        self.l2 = nn.Linear(512, 256)
-        self.l3 = nn.Linear(256, 1)
-
-    def forward(self, state, action):
-        sa = torch.cat([state, action], 1)
-
-        q = F.relu(self.l1(sa))
-        q = F.relu(self.l2(q))
-        q = self.l3(q)
-        
-        return q
-    
 class Trainer:
 
     def __init__(self, model, optimizer, batch_size, get_batch, state_dim, action_dim, state_mean,state_std, alpha, crtic_lr, loss_fn=None,scheduler=None, eval_fns=None):
@@ -63,7 +47,8 @@ class Trainer:
 
         train_start = time.time()
 
-        self.actor.train()
+        self.actor.train()  # 设置模型为训练模式
+        print("num_steps",num_steps)
         for _ in range(num_steps):
             self.total_it += 1
             train_loss = self.train_step()
@@ -90,5 +75,5 @@ class Trainer:
         torch.save(self.critic_optimizer.state_dict(), filename + "_critic_optimizer")
 
         torch.save(self.actor.state_dict(), filename + "_actor")
-        torch.save(self.actor_optimizer.state_dict(), filename + "_actor_optimizer")
+        torch.save(self.optimizer.state_dict(), filename + "_actor_optimizer")
 

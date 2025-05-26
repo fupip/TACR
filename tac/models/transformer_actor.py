@@ -57,6 +57,10 @@ class TransformerActor(TrajectoryModel):
 
         # Subsection 4.1, (9) : Embeddings of MDP
         # embed each modality with a different head
+        # print("states.shape",states.shape)
+        # print("actions.shape",actions.shape)
+        # print("rewards.shape",rewards.shape)
+        # print("timesteps.shape",timesteps.shape)
         state_embeddings = self.embed_state(states)
         action_embeddings = self.embed_action(actions)
         returns_embeddings = self.embed_return(rewards)
@@ -70,9 +74,15 @@ class TransformerActor(TrajectoryModel):
         # Algorithm 1, line7 : Stack MDP elements
         # this makes the sequence look like (r_1, s_1, a_1, r_2, s_2, a_2, ...)
         # which works nice in an autoregressive sense since states predict actions
+        # print("returns_embeddings.shape",returns_embeddings.shape)
+        # print("state_embeddings.shape",state_embeddings.shape)
+        # print("action_embeddings.shape",action_embeddings.shape)
         stacked_inputs = torch.stack((returns_embeddings, state_embeddings, action_embeddings), dim=1
         ).permute(0, 2, 1, 3).reshape(batch_size, 3*seq_length, self.hidden_size)
+        # print("stacked_inputs.shape",stacked_inputs.shape)
+        
         stacked_inputs = self.embed_ln(stacked_inputs)
+        # print("embed_ln stacked_inputs.shape",stacked_inputs.shape)
 
         # to make the attention mask fit the stacked inputs, have to stack it as well
         stacked_attention_mask = torch.stack(
@@ -93,6 +103,10 @@ class TransformerActor(TrajectoryModel):
         return_preds = self.predict_return(x[:,2])  # Predict next return given state and action (we don't use this)
         state_preds = self.predict_state(x[:,2])    # Predict next state given state and action (we don't use this)
         action_preds = self.predict_action(x[:,1])  # Algorithm 1, line8 : Predict next action given state
+        # print("action_preds.shape",action_preds.shape)
+        # print("return_preds.shape",return_preds.shape)
+        # print("state_preds.shape",state_preds.shape)
+        # print("--------------------------------")
         return state_preds, action_preds, return_preds
 
     def get_action(self, states, actions, rewards,  timesteps, **kwargs):

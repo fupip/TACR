@@ -15,6 +15,7 @@ class SequenceTrainer(Trainer):
             states, actions, rewards, timesteps, attention_mask=attention_mask,
         )
 
+        # actor_target 是actor的一个副本
         next_state_preds, next_action_preds, next_reward_preds = self.actor_target.forward(
             next_state, next_actions, next_rewards, next_timesteps, attention_mask=attention_mask,
         )
@@ -22,7 +23,10 @@ class SequenceTrainer(Trainer):
         states = states.reshape(-1, self.state_dim)[attention_mask.reshape(-1) > 0]
         next_state = next_state.reshape(-1, self.state_dim)[attention_mask.reshape(-1) > 0]
         rewards = rewards.reshape(-1, 1)[attention_mask.reshape(-1) > 0]
+        
+        # 当前的轨迹中的动作,用于critic的输入
         action_sample = actions.reshape(-1, self.action_dim)[attention_mask.reshape(-1) > 0]
+        
         Q_action_preds = action_preds.reshape(-1, self.action_dim)[attention_mask.reshape(-1) > 0]
         next_Q_action_preds = next_action_preds.reshape(-1, self.action_dim)[attention_mask.reshape(-1) > 0]
         dones = dones.reshape(-1, 1)[attention_mask.reshape(-1) > 0]
@@ -42,12 +46,12 @@ class SequenceTrainer(Trainer):
         self.critic_optimizer.step()
 
         # Algorithm 1, line11, line12 : Set lambda and Compute actor loss
-        pi = Q_action_preds
-        Q = self.critic(states, pi)
+        # pi = Q_action_preds
+        Q = self.critic(states, Q_action_preds)
         lmbda = self.alpha / Q.abs().mean().detach()
-        actor_loss = -lmbda * Q.mean() + F.mse_loss(pi, action_sample)
+        actor_loss = -lmbda * Q.mean() + F.mse_loss(Q_action_preds, action_sample)
 
-        # Optimize the actor
+        # Optimize the actor 训练主网络
         self.optimizer.zero_grad()
         actor_loss.backward()
 

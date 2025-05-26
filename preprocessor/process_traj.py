@@ -37,6 +37,7 @@ class trajectory:
         )
         )
         self.terminal = False
+        self.last_day_memory = self.data
 
     def step(self, i):
         # print(self.day)
@@ -46,10 +47,9 @@ class trajectory:
             return self.state, self.reward, self.terminal, np.zeros(self.action_space, dtype=float)
 
         else:
-            last_day_memory = self.data
-            # load next state
-            self.day += 1
+            
             self.data = self.df.loc[self.day, :]
+            
             self.state = (
                     self.data.open.values.tolist()
                     + self.data.high.values.tolist()
@@ -62,19 +62,32 @@ class trajectory:
                 ],
                 [],
             )
-            )
+            ) # 这里的sum 相当于把各个列表拼接成一个列表
+            
+            # print(self.state)
+            # self.terminal = True
 
-            portion = (self.data.close.values / last_day_memory.close.values)
+            portion = (self.data.close.values / self.last_day_memory.close.values)
             bc = []
 
+            # i 是生成轨迹的种类而不是step计数
+            # i 越大生成的比例越极端
+            # 因为 i 从0 开始所以必须+1
+            
             for j in portion:
-                bc.append(np.exp(j * (i + 1)))
+                bc.append(np.exp(j * (i + 1)))   
 
             weights = self.softmax_normalization(bc)
             weights[np.isnan(weights)] = 1.
+            
+            # 生成完state与weights后向前推进一天
+            self.last_day_memory = self.data
+            # load next state
+            self.day += 1
+            self.data = self.df.loc[self.day, :] # 获取当天数据,而不是当天之后所有数据
 
             portfolio_return = sum(
-                ((self.data.close.values / last_day_memory.close.values) - 1) * weights
+                ((self.data.close.values / self.last_day_memory.close.values) - 1) * weights
             )
 
             self.reward = portfolio_return

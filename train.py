@@ -26,7 +26,7 @@ def main(variant):
     dataset_path = f'{"trajectory/" + variant["dataset"] + "_traj.pkl"}'
     with open(dataset_path, 'rb') as f:
         trajectories = pickle.load(f)
-    state_space=trajectories[0]['observations'].shape[1]
+    state_space=trajectories[0]['observations'].shape[1]  #obs 即 历史state的集合 shape[1]累计的条数,shape[1]指指标的种类
     stock_dimension = len(train.tic.unique())
 
     print(f"Stock Dimension: {stock_dimension}, State Space: {state_space}")
@@ -62,29 +62,35 @@ def main(variant):
     u = variant['u']
 
     model = TransformerActor(
-        state_dim=state_dim,
-        act_dim=act_dim,
-        max_length=u,
-        max_ep_len=max_ep_len,
-        hidden_size=variant['embed_dim'],
-        n_layer=variant['n_layer'],
-        n_head=variant['n_head'],
-        n_inner=4 * variant['embed_dim'],
-        activation_function=variant['activation_function'],
-        n_positions=1024,
-        resid_pdrop=variant['dropout'],
-        attn_pdrop=variant['dropout'],
+        state_dim=state_dim,                # 状态空间的维度（输入特征数）  360
+        act_dim=act_dim,                    # 动作空间的维度（比如股票数量（每只股票的分配比例）
+        max_length=u,                       # 输入序列的最大长度 默认20
+        max_ep_len=max_ep_len,              # 一个episode的最大长度（用于时间步embedding等）训练数据条数
+        hidden_size=variant['embed_dim'],   # Transformer每层的隐藏单元数（embedding维度）默认128
+        n_layer=variant['n_layer'],         # Transformer的层数 默认5
+        n_head=variant['n_head'],           # 多头自注意力的头数 默认1
+        n_inner=4 * variant['embed_dim'],   # 前馈网络的隐藏层大小（一般是embedding的4倍）
+        activation_function=variant['activation_function'], # 激活函数 默认relu
+        n_positions=1024,                   # 支持的最大序列长度（位置编码用）
+        resid_pdrop=variant['dropout'],     # 残差连接的dropout概率
+        attn_pdrop=variant['dropout'],      # 注意力机制的dropout概率
     )
 
+    # 计算每个轨迹的观测值、长度和回报
     states, traj_lens, returns = [], [], []
     for path in trajectories:
         states.append(path['observations'])
         traj_lens.append(len(path['observations']))
         returns.append(path['rewards'].sum())
     traj_lens, returns = np.array(traj_lens), np.array(returns)
+    
+    # states[0].shape (3733, 360)
+    # print("states[0].shape",states[0].shape) 
+    
 
     # used for input normalization
-    states = np.concatenate(states, axis=0)
+    states = np.concatenate(states, axis=0) # 第1维合并起来,第二维不变 即 (3733*5,360)
+    # print("all states.shape",states.shape)
     state_mean, state_std = np.mean(states, axis=0), np.std(states, axis=0) + 1e-6
     num_timesteps = sum(traj_lens)
 
@@ -95,25 +101,32 @@ def main(variant):
     print(f'Max return: {np.max(returns):.2f}, min: {np.min(returns):.2f}')
     print('=' * 50)
 
-    batch_size = variant['batch_size']
+    batch_size = variant['batch_size'] # default 64
 
     def get_batch(batch_size=64, max_len=u):
+        # 随机选择轨迹
         batch_inds = np.random.choice(
             np.arange(len(traj_lens)),
             size=batch_size,
             replace=True
         )
+        # print("batch_inds",batch_inds)  # 64个随机数
 
         s, next_s, next_a, next_r, a, r, d, dd, timesteps, n_timesteps, mask \
             = [], [], [], [], [], [], [], [], [], [], []
+            
         for i in range(batch_size):
-            traj = trajectories[int(batch_inds[i])]
-            si = random.randint(0, traj['rewards'].shape[0] - 1)
+            traj = trajectories[int(batch_inds[i])] # 5个轨迹中任选一个
+            si = random.randint(0, traj['rewards'].shape[0] - 1) # 随机选择一个时间步
+            # print("si",si)
             # get sequences from dataset
             s.append(traj['observations'][si:si + max_len].reshape(1, -1, state_dim))
             a.append(traj['actions'][si:si + max_len].reshape(1, -1, act_dim))
             r.append(traj['rewards'][si:si + max_len].reshape(1, -1, 1))
             dd.append(traj['dones'][si:si + max_len].reshape(1, -1, 1))
+            # print("r",r)
+            # print("dd",dd)
+            # break
 
             if si >= traj['rewards'].shape[0] - u:
                 next_s.append(np.append(traj['observations'][si + 1:si + 1 + max_len],
@@ -132,20 +145,28 @@ def main(variant):
             else:
                 d.append(traj['dones'][si:si + max_len].reshape(1, -1))
 
+            # current_timesteps
             timesteps.append(np.arange(si, si + s[-1].shape[1]).reshape(1, -1))
             timesteps[-1][timesteps[-1] >= max_ep_len] = max_ep_len - 1  # padding cutoff
+            
+            # next_timesteps
             n_timesteps.append(np.arange(si + 1, si + 1 + s[-1].shape[1]).reshape(1, -1))
             n_timesteps[-1][n_timesteps[-1] >= max_ep_len] = max_ep_len - 1  # padding cutoff
 
             # padding and state normalization
             tlen = s[-1].shape[1]
             s[-1] = np.concatenate([np.zeros((1, max_len - tlen, state_dim)), s[-1]], axis=1)
+            
+            # normalize
             s[-1] = (s[-1] - state_mean) / state_std
             next_s[-1] = np.concatenate([np.zeros((1, max_len - tlen, state_dim)), next_s[-1]], axis=1)
+            # normalize
             next_s[-1] = (next_s[-1] - state_mean) / state_std
+            
             a[-1] = np.concatenate([np.ones((1, max_len - tlen, act_dim)) * -10., a[-1]], axis=1)
             r[-1] = np.concatenate([np.zeros((1, max_len - tlen, 1)), r[-1]], axis=1)
             dd[-1] = np.concatenate([np.zeros((1, max_len - tlen, 1)), dd[-1]], axis=1)
+            
             next_a[-1] = np.concatenate([np.ones((1, max_len - tlen, act_dim)) * -10., next_a[-1]], axis=1)
             next_r[-1] = np.concatenate([np.zeros((1, max_len - tlen, 1)), next_r[-1]], axis=1)
             timesteps[-1] = np.concatenate([np.zeros((1, max_len - tlen)), timesteps[-1]], axis=1)
@@ -164,6 +185,37 @@ def main(variant):
         mask = torch.from_numpy(np.concatenate(mask, axis=0)).to(device=device)
 
         return s, a, r, dd, next_s, next_a, next_r, timesteps, n_timesteps, mask
+    # 返回 state ,action reward,dones
+    # next_state,next_action,next_reward
+    # timesteps,n_timesteps,mask
+    
+    states,actions,rewards,dones,next_states,next_actions,next_rewards,timesteps,n_timesteps,mask = get_batch(batch_size,u)
+    print("*" *50 )
+    print("states.shape",states.shape)
+    print("actions.shape",actions.shape)
+    print("rewards.shape",rewards.shape)
+    print("dones.shape",dones.shape)
+    print("next_states.shape",next_states.shape)
+    print("next_actions.shape",next_actions.shape)
+    print("next_rewards.shape",next_rewards.shape)
+    print("timesteps.shape",timesteps.shape)
+    print("n_timesteps.shape",n_timesteps.shape)
+    print("mask.shape",mask.shape)
+    print("*" *50 )
+    # states.shape torch.Size([64, 20, 360])
+    # actions.shape torch.Size([64, 20, 30])
+    # rewards.shape torch.Size([64, 20, 1])
+    # dones.shape torch.Size([64, 20, 1])
+    # next_states.shape torch.Size([64, 20, 360])
+    # next_actions.shape torch.Size([64, 20, 30])
+    # next_rewards.shape torch.Size([64, 20, 1])
+    # timesteps.shape torch.Size([64, 20])
+    # n_timesteps.shape torch.Size([64, 20])
+    # mask.shape torch.Size([64, 20])
+    # return
+    
+
+    
 
 
     model = model.to(device=device)

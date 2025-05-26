@@ -47,6 +47,7 @@ class YahooDownloader:
         data_df = pd.DataFrame()
         for tic in self.ticker_list:
             temp_df = yf.download(tic, start=self.start_date, end=self.end_date)
+            print(temp_df.head())
             temp_df["tic"] = tic
             data_df = data_df.append(temp_df)
         # reset the index, we want to use numbers as index instead of dates
@@ -93,3 +94,8 @@ class YahooDownloader:
         select_stocks_list = list(names[equal_list])
         df = df[df.tic.isin(select_stocks_list)]
         return df
+
+if __name__ == "__main__":
+
+    df = yf.download("000338.SZ", start="2009-01-01", end="2022-01-01")
+    print(df.head())
