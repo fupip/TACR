@@ -91,6 +91,7 @@ class trajectory:
             )
 
             self.reward = portfolio_return
+            # print(f"portfolio_return: {portfolio_return}")
 
         return self.state, self.reward, self.terminal, weights
 
