@@ -45,6 +45,7 @@ class SequenceTrainer(Trainer):
         
         # CQL 正则项：最小化随机采样动作的 Q 值，同时最大化数据集中动作的 Q 值
         # 使用 CQL(H) 变体，通过 log-sum-exp 实现
+        # 计算 CQL 正则项
         batch_size = states.shape[0]
         
         num_random = 10  # 随机动作的倍数
@@ -52,12 +53,6 @@ class SequenceTrainer(Trainer):
         repeated_states = states.unsqueeze(1).repeat(1, num_random, 1).reshape(batch_size * num_random, -1)
         random_q = self.critic(repeated_states, random_actions)
         random_q = random_q.reshape(batch_size, num_random, 1)
-
-        
-        
-        
-        # 计算 CQL 正则项
-        random_q = self.critic(states, random_actions)
         
         # log-sum-exp 计算
         cat_q = torch.cat([random_q, Q.unsqueeze(1)], dim=1)
