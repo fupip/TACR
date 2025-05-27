@@ -40,8 +40,7 @@ class SequenceTrainer(Trainer):
         # Get current Q estimates
         current_Q = self.critic(states, action_sample)
         
-        # 当前预测动作的Q值
-        Q = self.critic(states, action_preds)
+        
         
         # CQL 正则项：最小化随机采样动作的 Q 值，同时最大化数据集中动作的 Q 值
         # 使用 CQL(H) 变体，通过 log-sum-exp 实现
@@ -69,6 +68,9 @@ class SequenceTrainer(Trainer):
         self.critic_optimizer.zero_grad()
         critic_loss.backward()
         self.critic_optimizer.step()
+        
+        # 当前预测动作的Q值
+        Q = self.critic(states, action_preds)
 
         # Algorithm 1, line11, line12 : 计算 actor loss
         # 在 CQL 方法中，我们仍然使用类似的 actor 更新
