@@ -31,7 +31,7 @@ class SequenceTrainer(Trainer):
         next_action_preds = next_action_preds.reshape(-1, self.action_dim)[attention_mask.reshape(-1) > 0]
         dones = dones.reshape(-1, 1)[attention_mask.reshape(-1) > 0]
         
-        print("dones",dones)
+        # print("dones",dones)
 
         # Algorithm 1, line9, line10
         # Compute the target Q value
