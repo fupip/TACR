@@ -53,7 +53,7 @@ class SequenceTrainer(Trainer):
         random_q = self.critic(repeated_states, random_actions)
         random_q = random_q.reshape(batch_size, num_random, 1)
         
-        Q = self.critic(states, action_preds)
+        Q = self.critic(states, action_preds.detach())
         
         # log-sum-exp 计算
         cat_q = torch.cat([random_q, Q.unsqueeze(1)], dim=1)
