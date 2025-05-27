@@ -72,14 +72,14 @@ class SequenceTrainer(Trainer):
         self.critic_optimizer.step()
         
         # 当前预测动作的Q值
-        Q = self.critic(states, action_preds)
+        new_Q = self.critic(states, action_preds)
 
         # Algorithm 1, line11, line12 : 计算 actor loss
         # 在 CQL 方法中，我们仍然使用类似的 actor 更新
         
-        lmbda = self.alpha / Q.abs().mean().detach()
+        lmbda = self.alpha / new_Q.abs().mean().detach()
         bc_loss = F.mse_loss(action_preds, action_sample)
-        actor_loss = -lmbda * Q.mean() + bc_loss
+        actor_loss = -lmbda * new_Q.mean() + bc_loss
 
         # Optimize the actor 训练主网络
         self.optimizer.zero_grad()
