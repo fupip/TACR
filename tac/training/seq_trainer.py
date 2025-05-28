@@ -53,15 +53,18 @@ class SequenceTrainer(Trainer):
         random_q = self.critic(repeated_states, random_actions)
         random_q = random_q.reshape(batch_size, num_random, 1)
         
+        data_q = current_Q.unsqueeze(1)
+        
         Q = self.critic(states, action_preds.detach())
+        policy_q = Q.unsqueeze(1)
         
         # log-sum-exp 计算
-        cat_q = torch.cat([random_q, Q.unsqueeze(1)], dim=1)
+        cat_q = torch.cat([random_q, data_q, policy_q], dim=1)
         logsumexp_q = torch.logsumexp(cat_q, dim=1, keepdim=True)
         
         # CQL 正则项 = alpha * (logsumexp_q - q_data)
         cql_regularizer = (logsumexp_q - current_Q).mean()
-        cql_alpha = self.alpha  # 使用已有的 alpha 参数
+        cql_alpha = 2.0  # 使用已有的 alpha 参数
         
         # 最终的 critic 损失 = 标准 TD 误差 + CQL 正则项
         critic_loss = F.mse_loss(current_Q, target_Q) + cql_alpha * cql_regularizer
