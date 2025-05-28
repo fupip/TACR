@@ -173,10 +173,10 @@ class SequenceTrainer(Trainer):
         actor_loss = -(exp_adv * log_probs).mean()
         
         
-        if step % 1000 == 0:
+        if step % 100 == 0:
             print("action_preds",action_preds.mean())
             print("log_probs",log_probs.mean())
-            print("action_mean",action_mean)
+            print("action_mean",action_mean.mean())
             print("log_std",log_std.mean())
             print("adv ",adv.mean())
             print("exp_adv",exp_adv.mean())
