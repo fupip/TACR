@@ -175,7 +175,7 @@ class SequenceTrainer(Trainer):
         
         if step % 1000 == 0:
             print("action_preds",action_preds.mean())
-            print("log_probs",log_probs.meain())
+            print("log_probs",log_probs.mean())
             print("action_mean",action_mean)
             print("log_std",log_std)
             print("adv ",adv.mean)
