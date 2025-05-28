@@ -118,7 +118,7 @@ class TransformerActor(TrajectoryModel):
         # h: [batch, seq, hidden_size]
         mu = self.action_head_mu(h)           # Linear层，输出动作均值
         log_std = self.action_head_logstd(h)  # Linear层，输出动作对数标准差
-        log_std = torch.clamp(log_std, min=-5, max=2)  # 限制std范围，避免数值异常
+        log_std = torch.clamp(log_std, min=-1, max=1)  # 限制std范围，避免数值异常
         return mu, log_std
     
     # 预测动作分布 为IQL算法使用
