@@ -163,7 +163,8 @@ class SequenceTrainer(Trainer):
             adv = new_Q - new_v
             exp_adv = torch.exp(adv / self.beta).clamp(max=100)
         
-        
+        print("log_probs shape",log_probs.shape)
+        print("exp_adv shape",exp_adv.shape)
         actor_loss = -(exp_adv * log_probs).mean()
 
         # Optimize the actor 训练主网络
