@@ -170,9 +170,17 @@ class SequenceTrainer(Trainer):
         # print("exp_adv shape",exp_adv.shape)
         log_probs = log_probs.reshape(-1, 1)[attention_mask.reshape(-1) > 0]
         actor_loss = -(exp_adv * log_probs).mean()
+        
+        
+        
+        print("action_preds",action_preds)
+        print("log_probs",log_probs)
+        print("mu",mu)
+        print("log_std",log_std)
+        print("adv ",adv)
         print("actor_loss",actor_loss)
         print("exp_adv",exp_adv)
-        print("log_probs",log_probs)
+
 
         # Optimize the actor 训练主网络
         self.optimizer.zero_grad()
