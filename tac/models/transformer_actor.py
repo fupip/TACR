@@ -48,8 +48,8 @@ class TransformerActor(TrajectoryModel):
         )
         self.predict_return = torch.nn.Linear(hidden_size, 1)
         
-        self.action_head_mu = nn.Linear(hidden_size, action_dim)
-        self.action_head_logstd = nn.Linear(hidden_size, action_dim)
+        self.action_head_mu = nn.Linear(hidden_size, self.act_dim)
+        self.action_head_logstd = nn.Linear(hidden_size, self.act_dim)
 
     def forward(self, states, actions, rewards, timesteps, attention_mask=None):
         batch_size, seq_length = states.shape[0], states.shape[1]
