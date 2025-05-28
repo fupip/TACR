@@ -166,16 +166,16 @@ class TransformerActor(TrajectoryModel):
 
         # get predictions
         
-        mu, log_std = self.predict_action_dist(x[:,1])
-        std = log_std.exp()
-        dist = torch.distributions.Normal(mu, std)
-        raw_actions = dist.rsample()         # 采样原始动作
-        log_probs = dist.log_prob(raw_actions).sum(-1) # 计算原始动作的log_prob
-        # 将动作限制在[0,1]范围内，并且各维度和为1
-        action_preds = F.softmax(raw_actions, dim=-1)  # 使用softmax替代sigmoid
+        # mu, log_std = self.predict_action_dist(x[:,1])
+        # std = log_std.exp()
+        # dist = torch.distributions.Normal(mu, std)
+        # raw_actions = dist.rsample()         # 采样原始动作
+        # log_probs = dist.log_prob(raw_actions).sum(-1) # 计算原始动作的log_prob
+        # # 将动作限制在[0,1]范围内，并且各维度和为1
+        # action_preds = F.softmax(raw_actions, dim=-1)  # 使用softmax替代sigmoid
         
-        # 对mu也应用softmax
-        action_mean = F.softmax(mu, dim=-1)
+        # # 对mu也应用softmax
+        # action_mean = F.softmax(mu, dim=-1)
         
         
         alpha = self.predict_action_dist(x[:,1])                  # [batch, seq, 30]
