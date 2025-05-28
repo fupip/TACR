@@ -174,7 +174,7 @@ class TransformerActor(TrajectoryModel):
         log_probs = dist.log_prob(action_preds).sum(-1) # 计算log_prob
         
 
-        return action_preds, log_probs
+        return action_preds, log_probs, mu, log_std
 
     def get_action(self, states, actions, rewards,  timesteps, **kwargs):
         states = states.reshape(1, -1, self.state_dim)
@@ -209,7 +209,13 @@ class TransformerActor(TrajectoryModel):
         else:
             attention_mask = None
 
-        _, action_preds, return_preds = self.forward(
+        # _, action_preds, return_preds = self.forward(
+        #     states, actions, rewards, timesteps, attention_mask=attention_mask, **kwargs)
+        
+        # 使用IQL算法
+        action_preds_sample, log_probs, action_preds, log_std = self.forward_dist(
             states, actions, rewards, timesteps, attention_mask=attention_mask, **kwargs)
+
+        print("action_preds",action_preds)
 
         return action_preds[0,-1]
