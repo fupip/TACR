@@ -47,6 +47,9 @@ class TransformerActor(TrajectoryModel):
             *([nn.Linear(hidden_size, self.act_dim)] + ([nn.Softmax(dim=2)] if action_softmax else []))
         )
         self.predict_return = torch.nn.Linear(hidden_size, 1)
+        
+        self.action_head_mu = nn.Linear(hidden_size, action_dim)
+        self.action_head_logstd = nn.Linear(hidden_size, action_dim)
 
     def forward(self, states, actions, rewards, timesteps, attention_mask=None):
         batch_size, seq_length = states.shape[0], states.shape[1]
@@ -109,6 +112,69 @@ class TransformerActor(TrajectoryModel):
         # print("state_preds.shape",state_preds.shape)
         # print("--------------------------------")
         return state_preds, action_preds, return_preds
+    
+    def predict_action_dist(self, h):
+        # h: [batch, seq, hidden_size]
+        mu = self.action_head_mu(h)           # Linear层，输出动作均值
+        log_std = self.action_head_logstd(h)  # Linear层，输出动作对数标准差
+        log_std = torch.clamp(log_std, min=-5, max=2)  # 限制std范围，避免数值异常
+        return mu, log_std
+    
+    # 预测动作分布 为IQL算法使用
+    def forward_dist(self, states, actions, rewards, timesteps, attention_mask=None):
+        batch_size, seq_length = states.shape[0], states.shape[1]
+        
+
+        if attention_mask is None:
+            # attention mask for GPT: 1 if can be attended to, 0 if not
+            attention_mask = torch.ones((batch_size, seq_length), dtype=torch.long)
+
+        # Subsection 4.1, (9) : Embeddings of MDP
+        # embed each modality with a different head
+        state_embeddings = self.embed_state(states)
+        action_embeddings = self.embed_action(actions)
+        returns_embeddings = self.embed_return(rewards)
+        time_embeddings = self.embed_timestep(timesteps)
+
+        # time embeddings are treated similar to positional embeddings
+        state_embeddings = state_embeddings + time_embeddings
+        action_embeddings = action_embeddings + time_embeddings
+        returns_embeddings = returns_embeddings + time_embeddings
+
+        # Algorithm 1, line7 : Stack MDP elements
+        # this makes the sequence look like (r_1, s_1, a_1, r_2, s_2, a_2, ...)
+        # which works nice in an autoregressive sense since states predict actions
+
+        stacked_inputs = torch.stack((returns_embeddings, state_embeddings, action_embeddings), dim=1
+        ).permute(0, 2, 1, 3).reshape(batch_size, 3*seq_length, self.hidden_size)
+        
+        stacked_inputs = self.embed_ln(stacked_inputs)
+
+        # to make the attention mask fit the stacked inputs, have to stack it as well
+        stacked_attention_mask = torch.stack(
+            (attention_mask, attention_mask, attention_mask), dim=1
+        ).permute(0, 2, 1).reshape(batch_size, 3*seq_length)
+        # we feed in the input embeddings (not word indices as in NLP) to the model
+        transformer_outputs = self.transformer(
+            inputs_embeds=stacked_inputs,
+            attention_mask=stacked_attention_mask,
+        )
+        x = transformer_outputs['last_hidden_state']
+
+        # reshape x so that the second dimension corresponds to the original
+        # returns (0), states (1), or actions (2); i.e. x[:,1,t] is the token for s_t
+        x = x.reshape(batch_size, seq_length, 3, self.hidden_size).permute(0, 2, 1, 3)
+
+        # get predictions
+        
+        mu, log_std = self.predict_action_dist(x[:,1])
+        std = log_std.exp()
+        dist = torch.distributions.Normal(mu, std)
+        action_preds = dist.rsample()         # 采样动作
+        log_probs = dist.log_prob(action_preds).sum(-1) # 计算log_prob
+        
+
+        return action_preds, log_probs
 
     def get_action(self, states, actions, rewards,  timesteps, **kwargs):
         states = states.reshape(1, -1, self.state_dim)

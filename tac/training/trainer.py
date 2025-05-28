@@ -5,6 +5,7 @@ import torch.nn.functional as F
 import copy
 import time
 from .critic import Critic
+from .value_net import ValueNet
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
@@ -34,9 +35,13 @@ class Trainer:
 
         self.discount = 0.99
         self.tau = 0.005
+        
+        self.value_net = ValueNet(state_dim).to(device)
+        self.value_net_optimizer = torch.optim.Adam(self.value_net.parameters(), lr=crtic_lr)
 
         # Algorithm 1, line11 : Set hyperparameter alpha 0.9 ~ 2
         self.alpha = alpha
+        self.beta = 3.0                # IQL beta值 [1.0,5.0] 默认3.0稳健
 
         self.start_time = time.time()
 
@@ -51,7 +56,7 @@ class Trainer:
         print("num_steps",num_steps)
         for _ in range(num_steps):
             self.total_it += 1
-            train_loss = self.train_step()
+            train_loss = self.train_step_iql()
             train_losses.append(train_loss)
 
         logs['time/training'] = time.time() - train_start

@@ -99,4 +99,83 @@ class SequenceTrainer(Trainer):
             target_param.data.copy_(self.tau * param.data + (1 - self.tau) * target_param.data)
 
         return actor_loss.detach().cpu().item()
+    
+    def train_step_iql(self):
+        # Algorithm 1, line6 : Sample a random minibatch
+        states, actions, rewards, dones, next_state, next_actions, next_rewards, \
+        timesteps, next_timesteps, attention_mask = self.get_batch(self.batch_size)
+
+        # # Algorithm 1, line8 : Predict a action
+        action_preds, log_probs = self.actor.forward_dist(
+            states, actions, rewards, timesteps, attention_mask=attention_mask,
+        )
+        
+
+        states = states.reshape(-1, self.state_dim)[attention_mask.reshape(-1) > 0]
+        rewards = rewards.reshape(-1, 1)[attention_mask.reshape(-1) > 0]
+        
+        # 当前的轨迹中的动作,用于critic的输入
+        action_sample = actions.reshape(-1, self.action_dim)[attention_mask.reshape(-1) > 0]
+        
+        action_preds = action_preds.reshape(-1, self.action_dim)[attention_mask.reshape(-1) > 0]
+        
+        dones = dones.reshape(-1, 1)[attention_mask.reshape(-1) > 0]
+        
+        next_state = next_state.reshape(-1, self.state_dim)[attention_mask.reshape(-1) > 0]
+        
+        
+        # 1. 首先更新V(s)
+        v = self.value_net(states)
+
+        # Get current Q estimates
+        with torch.no_grad():
+            current_Q = self.critic(states, action_sample)
+        
+        v_loss = F.mse_loss(v, current_Q)
+        
+        self.value_net_optimizer.zero_grad()
+        v_loss.backward()
+        self.value_net_optimizer.step()
+        
+
+        batch_size = states.shape[0]
+        
+
+        # 2. 更新Q网络
+        with torch.no_grad():
+            next_v = self.value_net(next_state)
+            target = rewards + self.discount * next_v * (1 - dones)
+        
+        q_pred = self.critic(states, action_sample)
+
+        q_loss = F.mse_loss(q_pred, target)
+
+        self.critic_optimizer.zero_grad()
+        q_loss.backward()
+        self.critic_optimizer.step()
+
+
+        
+        # 3. 更新actor网络
+        with torch.no_grad():
+            new_Q = self.critic(states, action_preds)
+            new_v = self.value_net(states)
+            adv = new_Q - new_v
+            exp_adv = torch.exp(adv / self.beta).clamp(max=100)
+        
+        
+        actor_loss = -(exp_adv * log_probs).mean()
+
+        # Optimize the actor 训练主网络
+        self.optimizer.zero_grad()
+        actor_loss.backward()
+
+        torch.nn.utils.clip_grad_norm_(self.actor.parameters(), .25)
+        self.optimizer.step()
+
+        if self.scheduler is not None:
+            self.scheduler.step()
+
+
+        return actor_loss.detach().cpu().item()
 
