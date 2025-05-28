@@ -176,8 +176,10 @@ class TransformerActor(TrajectoryModel):
         # 将动作限制在[0,1]范围内，并且各维度和为1
         action_preds = F.softmax(raw_actions, dim=-1)  # 使用softmax替代sigmoid
         
+        # 对mu也应用softmax
+        action_mean = F.softmax(mu, dim=-1)
 
-        return action_preds, log_probs, mu, log_std
+        return action_preds, log_probs, action_mean, log_std
 
     def get_action(self, states, actions, rewards,  timesteps, **kwargs):
         states = states.reshape(1, -1, self.state_dim)
@@ -212,8 +214,8 @@ class TransformerActor(TrajectoryModel):
         else:
             attention_mask = None
 
-        _, action_preds, return_preds = self.forward(
-            states, actions, rewards, timesteps, attention_mask=attention_mask, **kwargs)
+        # _, action_preds, return_preds = self.forward(
+        #     states, actions, rewards, timesteps, attention_mask=attention_mask, **kwargs)
         
         # 使用IQL算法
         action_preds_sample, log_probs, action_preds, log_std = self.forward_dist(
