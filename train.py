@@ -262,16 +262,16 @@ def main(variant):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--dataset', type=str, default='kdd')  # kdd, hightech, dow, ndx, mdax, csi
+    parser.add_argument('--dataset', type=str, default='csi')  # kdd, hightech, dow, ndx, mdax, csi
     parser.add_argument('--env', type=str, default='stock')
     parser.add_argument('--seed', type=int, default=0)
-    parser.add_argument('--u', type=int, default=20) # 40 (kdd, hightech, dow), 20 (ndx, mdax, csi)
+    parser.add_argument('--u', type=int, default=60) # 40 (kdd, hightech, dow), 20 (ndx, mdax, csi)
     parser.add_argument('--alpha', type=float, default=0.9) # 1.6 (kdd), 2. (hightech), 1.4 (dow), 0.9 (ndx, mdax, csi)
     parser.add_argument('--pct_traj', type=float, default=1.)
     parser.add_argument('--batch_size', type=int, default=64)
     parser.add_argument('--embed_dim', type=int, default=128)
     parser.add_argument('--n_layer', type=int, default=5)
-    parser.add_argument('--n_head', type=int, default=1)
+    parser.add_argument('--n_head', type=int, default=4)
     parser.add_argument('--activation_function', type=str, default='relu')
     parser.add_argument('--dropout', type=float, default=0.1)
     parser.add_argument('--learning_rate', '-lr', type=float, default=1e-4)
