@@ -177,10 +177,10 @@ class SequenceTrainer(Trainer):
             print("action_preds",action_preds.mean())
             print("log_probs",log_probs.mean())
             print("action_mean",action_mean)
-            print("log_std",log_std)
-            print("adv ",adv.mean)
+            print("log_std",log_std.mean())
+            print("adv ",adv.mean())
             print("exp_adv",exp_adv.mean())
-            print("actor_loss",actor_loss)
+            print("actor_loss",actor_loss.mean())
 
 
         # Optimize the actor 训练主网络
