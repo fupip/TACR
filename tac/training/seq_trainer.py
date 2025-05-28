@@ -113,6 +113,7 @@ class SequenceTrainer(Trainer):
             states, actions, rewards, timesteps, attention_mask=attention_mask,
         )
         
+        # action_preds已经在forward_dist方法中通过sigmoid限制在了[0,1]范围内
 
         states = states.reshape(-1, self.state_dim)[attention_mask.reshape(-1) > 0]
         rewards = rewards.reshape(-1, 1)[attention_mask.reshape(-1) > 0]

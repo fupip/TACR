@@ -4,6 +4,7 @@ import torch.nn as nn
 import transformers
 from tac.models.model import TrajectoryModel
 from tac.models.trajectory_gpt2 import GPT2Model
+import torch.nn.functional as F
 
 class TransformerActor(TrajectoryModel):
 
@@ -170,8 +171,10 @@ class TransformerActor(TrajectoryModel):
         mu, log_std = self.predict_action_dist(x[:,1])
         std = log_std.exp()
         dist = torch.distributions.Normal(mu, std)
-        action_preds = dist.rsample()         # 采样动作
-        log_probs = dist.log_prob(action_preds).sum(-1) # 计算log_prob
+        raw_actions = dist.rsample()         # 采样原始动作
+        log_probs = dist.log_prob(raw_actions).sum(-1) # 计算原始动作的log_prob
+        # 将动作限制在[0,1]范围内，并且各维度和为1
+        action_preds = F.softmax(raw_actions, dim=-1)  # 使用softmax替代sigmoid
         
 
         return action_preds, log_probs, mu, log_std
@@ -213,9 +216,14 @@ class TransformerActor(TrajectoryModel):
             states, actions, rewards, timesteps, attention_mask=attention_mask, **kwargs)
         
         # 使用IQL算法
-        # action_preds_sample, log_probs, action_preds, log_std = self.forward_dist(
-        #     states, actions, rewards, timesteps, attention_mask=attention_mask, **kwargs)
+        action_preds_sample, log_probs, action_preds, log_std = self.forward_dist(
+            states, actions, rewards, timesteps, attention_mask=attention_mask, **kwargs)
 
+        
+
+        
+        action_preds = F.softmax(action_preds, dim=-1)  # 使用softmax替代sigmoid
+        
         print("action_preds",action_preds)
 
         return action_preds[0,-1]
