@@ -55,7 +55,7 @@ class Trainer:
 
         self.actor.train()  # 设置模型为训练模式
         print("num_steps",num_steps)
-        for _ in tqdm(range(num_steps), desc="训练进度"):
+        for _ in tqdm(range(num_steps), desc="train progress"):
             self.total_it += 1
             train_loss = self.train_step_iql()
             train_losses.append(train_loss)
