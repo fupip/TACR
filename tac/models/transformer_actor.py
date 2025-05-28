@@ -116,7 +116,7 @@ class TransformerActor(TrajectoryModel):
     def predict_action_dist(self, h):
         # h: [batch, seq, hidden_size]
         alpha_raw = self.action_head_alpha(h)  # 假设你有一个Linear层输出30维
-        alpha = F.softplus(alpha_raw) + 1e-4   # 保证所有参数为正
+        alpha = torch.clamp(F.softplus(alpha_raw) + 1e-4, max=10.0)
         return alpha
     
     # 预测动作分布 为IQL算法使用
