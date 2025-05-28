@@ -185,7 +185,7 @@ class TransformerActor(TrajectoryModel):
         action_mean = alpha / alpha.sum(dim=-1, keepdim=True)     # Dirichlet均值，[batch, seq, 30]
 
 
-        return action_preds, log_probs, action_mean, log_std
+        return action_preds, log_probs, action_mean, alpha
 
     def get_action(self, states, actions, rewards,  timesteps, **kwargs):
         states = states.reshape(1, -1, self.state_dim)
