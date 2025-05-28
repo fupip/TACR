@@ -209,12 +209,12 @@ class TransformerActor(TrajectoryModel):
         else:
             attention_mask = None
 
-        # _, action_preds, return_preds = self.forward(
-        #     states, actions, rewards, timesteps, attention_mask=attention_mask, **kwargs)
+        _, action_preds, return_preds = self.forward(
+            states, actions, rewards, timesteps, attention_mask=attention_mask, **kwargs)
         
         # 使用IQL算法
-        action_preds_sample, log_probs, action_preds, log_std = self.forward_dist(
-            states, actions, rewards, timesteps, attention_mask=attention_mask, **kwargs)
+        # action_preds_sample, log_probs, action_preds, log_std = self.forward_dist(
+        #     states, actions, rewards, timesteps, attention_mask=attention_mask, **kwargs)
 
         print("action_preds",action_preds)
 
