@@ -103,7 +103,7 @@ class SequenceTrainer(Trainer):
 
         return actor_loss.detach().cpu().item()
     
-    def train_step_iql(self):
+    def train_step_iql(self,step):
         # Algorithm 1, line6 : Sample a random minibatch
         states, actions, rewards, dones, next_state, next_actions, next_rewards, \
         timesteps, next_timesteps, attention_mask = self.get_batch(self.batch_size)
@@ -173,14 +173,14 @@ class SequenceTrainer(Trainer):
         actor_loss = -(exp_adv * log_probs).mean()
         
         
-        
-        # print("action_preds",action_preds)
-        # print("log_probs",log_probs)
-        # print("action_mean",action_mean)
-        # print("log_std",log_std)
-        # print("adv ",adv)
-        # print("actor_loss",actor_loss)
-        # print("exp_adv",exp_adv)
+        if step % 1000 == 0:
+            print("action_preds",action_preds.mean())
+            print("log_probs",log_probs.meain())
+            print("action_mean",action_mean)
+            print("log_std",log_std)
+            print("adv ",adv.mean)
+            print("exp_adv",exp_adv.mean())
+            print("actor_loss",actor_loss)
 
 
         # Optimize the actor 训练主网络
