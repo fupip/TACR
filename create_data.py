@@ -74,8 +74,8 @@ def create_data(variant):
         train = data_split(processed_full, '2006-10-20','2012-11-16')
         trade = data_split(processed_full, '2012-11-16','2013-11-21')
     else:
-        train = data_split(processed_full, '2009-01-01','2024-05-18')
-        trade = data_split(processed_full, '2024-05-19','2025-05-20')
+        train = data_split(processed_full, '2011-01-01','2024-05-18')
+        trade = data_split(processed_full, '2024-05-19','2025-05-28')
 
     if not os.path.exists("datasets"):
         os.makedirs("datasets")
