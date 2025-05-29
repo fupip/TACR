@@ -182,7 +182,7 @@ class SequenceTrainer(Trainer):
             print("alpha mean       ",alpha.mean().item(),"min",alpha.min().item(),"max",alpha.max().item())
             print("adv mean         ",adv.mean().item(),"min",adv.min().item(),"max",adv.max().item())
             print("exp_adv mean     ",exp_adv.mean().item(),"min",exp_adv.min().item(),"max",exp_adv.max().item())
-            print("actor_loss mean  ",actor_loss.mean().item(),"min",actor_loss.min().item(),"max",actor_loss.max().item())
+            print("--[actor_loss ]--",actor_loss.mean().item(),"min",actor_loss.min().item(),"max",actor_loss.max().item())
 
 
         # Optimize the actor 训练主网络
