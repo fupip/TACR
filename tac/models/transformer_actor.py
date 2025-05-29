@@ -117,7 +117,7 @@ class TransformerActor(TrajectoryModel):
         # h: [batch, seq, hidden_size]
         alpha_raw = self.action_head_alpha(h)  # 假设你有一个Linear层输出30维
         alpha = torch.clamp(F.softplus(alpha_raw) + 1e-4, max=10.0)
-        return alpha
+        return alpha    
     
     # 预测动作分布 为IQL算法使用
     def forward_dist(self, states, actions, rewards, timesteps, attention_mask=None):
@@ -182,6 +182,8 @@ class TransformerActor(TrajectoryModel):
         dist = torch.distributions.Dirichlet(alpha)
         action_preds = dist.rsample()                             # [batch, seq, 30]，每行和为1
         log_probs = dist.log_prob(action_preds)                   # [batch, seq]
+        print("action_preds",action_preds)
+        print("log_probs",log_probs)
         action_mean = alpha / alpha.sum(dim=-1, keepdim=True)     # Dirichlet均值，[batch, seq, 30]
 
 
