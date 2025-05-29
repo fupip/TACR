@@ -182,9 +182,15 @@ class TransformerActor(TrajectoryModel):
         dist = torch.distributions.Dirichlet(alpha)
         action_preds = dist.rsample()                             # [batch, seq, 30]，每行和为1
         log_probs = dist.log_prob(action_preds)                   # [batch, seq]
-        print("action_preds",action_preds)
-        print("log_probs",log_probs)
+
+
         action_mean = alpha / alpha.sum(dim=-1, keepdim=True)     # Dirichlet均值，[batch, seq, 30]
+        
+        
+        print("action_preds mean",action_preds.mean(),"min",action_preds.min(),"max",action_preds.max())
+        print("log_probs mean",log_probs.mean(),"min",log_probs.min(),"max",log_probs.max())
+        print("action_mean mean",action_mean.mean(),"min",action_mean.min(),"max",action_mean.max())
+        print('alpha mean', alpha.mean(), 'min', alpha.min(), 'max', alpha.max())
 
 
         return action_preds, log_probs, action_mean, alpha
