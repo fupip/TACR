@@ -232,8 +232,11 @@ class TransformerActor(TrajectoryModel):
         #     states, actions, rewards, timesteps, attention_mask=attention_mask, **kwargs)
         
         # 使用IQL算法
-        action_preds_sample, log_probs, action_preds, log_std = self.forward_dist(
+        action_preds_sample, log_probs, action_preds, alpha = self.forward_dist(
             states, actions, rewards, timesteps, attention_mask=attention_mask, **kwargs)
-        print("action_preds",action_preds)
+        print("action_preds_sample mean",action_preds_sample.mean().item(),"min",action_preds_sample.min().item(),"max",action_preds_sample.max().item())
+        print("action_preds mean",action_preds.mean().item(),"min",action_preds.min().item(),"max",action_preds.max().item())
+        print("log_probs mean",log_probs.mean().item(),"min",log_probs.min().item(),"max",log_probs.max().item())
+        print("alpha mean",alpha.mean().item(),"min",alpha.min().item(),"max",alpha.max().item())
 
         return action_preds[0,-1]
