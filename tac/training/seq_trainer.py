@@ -109,7 +109,7 @@ class SequenceTrainer(Trainer):
         timesteps, next_timesteps, attention_mask = self.get_batch(self.batch_size)
 
         # # Algorithm 1, line8 : Predict a action
-        action_preds, log_probs, action_mean, log_std = self.actor.forward_dist(
+        action_preds, log_probs, action_mean, alpha = self.actor.forward_dist(
             states, actions, rewards, timesteps, attention_mask=attention_mask,
         )
         
@@ -177,7 +177,7 @@ class SequenceTrainer(Trainer):
             print("action_preds",action_preds.mean().item(),"min",action_preds.min().item(),"max",action_preds.max().item())
             print("log_probs mean",log_probs.mean().item(),"min",log_probs.min().item(),"max",log_probs.max().item())
             print("action_mean",action_mean.mean().item(),"min",action_mean.min().item(),"max",action_mean.max().item())
-            print("log_std",log_std.mean().item(),"min",log_std.min().item(),"max",log_std.max().item())
+            print("alpha",alpha.mean().item(),"min",alpha.min().item(),"max",alpha.max().item())
             print("adv ",adv.mean().item(),"min",adv.min().item(),"max",adv.max().item())
             print("exp_adv",exp_adv.mean().item(),"min",exp_adv.min().item(),"max",exp_adv.max().item())
             print("actor_loss",actor_loss.mean().item(),"min",actor_loss.min().item(),"max",actor_loss.max().item())
