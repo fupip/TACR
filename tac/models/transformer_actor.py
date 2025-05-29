@@ -180,7 +180,7 @@ class TransformerActor(TrajectoryModel):
         
         alpha = self.predict_action_dist(x[:,1])                  # [batch, seq, 30]
         dist = torch.distributions.Dirichlet(alpha)
-        action_preds = dist.rsample()                             # [batch, seq, 30]，每行和为1
+        action_preds = dist.rsample().clamp(min=1e-6)                             # [batch, seq, 30]，每行和为1
         log_probs = dist.log_prob(action_preds)                   # [batch, seq]
 
 
