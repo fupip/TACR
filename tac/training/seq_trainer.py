@@ -173,16 +173,14 @@ class SequenceTrainer(Trainer):
         actor_loss = -(exp_adv * log_probs).mean()
         
         
-        # if step % 1000 == 0:
-        #     print("action_preds",action_preds.mean())
-        #     print("log_probs mean",log_probs.mean())
-        #     print("log_probs min",log_probs.min())
-        #     print("log_probs max",log_probs.max())
-        #     print("action_mean",action_mean.mean())
-        #     print("log_std",log_std.mean())
-        #     print("adv ",adv.mean())
-        #     print("exp_adv",exp_adv.mean())
-        #     print("actor_loss",actor_loss.mean())
+        if step % 1000 == 0:
+            print("action_preds",action_preds.mean().item(),"min",action_preds.min().item(),"max",action_preds.max().item())
+            print("log_probs mean",log_probs.mean().item(),"min",log_probs.min().item(),"max",log_probs.max().item())
+            print("action_mean",action_mean.mean().item(),"min",action_mean.min().item(),"max",action_mean.max().item())
+            print("log_std",log_std.mean().item(),"min",log_std.min().item(),"max",log_std.max().item())
+            print("adv ",adv.mean().item(),"min",adv.min().item(),"max",adv.max().item())
+            print("exp_adv",exp_adv.mean().item(),"min",exp_adv.min().item(),"max",exp_adv.max().item())
+            print("actor_loss",actor_loss.mean().item(),"min",actor_loss.min().item(),"max",actor_loss.max().item())
 
 
         # Optimize the actor 训练主网络
