@@ -173,16 +173,16 @@ class SequenceTrainer(Trainer):
         actor_loss = -(exp_adv * log_probs).mean()
         
         
-        if step % 1000 == 0:
-            print("action_preds",action_preds.mean())
-            print("log_probs mean",log_probs.mean())
-            print("log_probs min",log_probs.min())
-            print("log_probs max",log_probs.max())
-            print("action_mean",action_mean.mean())
-            print("log_std",log_std.mean())
-            print("adv ",adv.mean())
-            print("exp_adv",exp_adv.mean())
-            print("actor_loss",actor_loss.mean())
+        # if step % 1000 == 0:
+        #     print("action_preds",action_preds.mean())
+        #     print("log_probs mean",log_probs.mean())
+        #     print("log_probs min",log_probs.min())
+        #     print("log_probs max",log_probs.max())
+        #     print("action_mean",action_mean.mean())
+        #     print("log_std",log_std.mean())
+        #     print("adv ",adv.mean())
+        #     print("exp_adv",exp_adv.mean())
+        #     print("actor_loss",actor_loss.mean())
 
 
         # Optimize the actor 训练主网络

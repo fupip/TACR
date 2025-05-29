@@ -187,10 +187,10 @@ class TransformerActor(TrajectoryModel):
         action_mean = alpha / alpha.sum(dim=-1, keepdim=True)     # Dirichlet均值，[batch, seq, 30]
         
         
-        print("action_preds mean",action_preds.mean(),"min",action_preds.min(),"max",action_preds.max())
-        print("log_probs mean",log_probs.mean(),"min",log_probs.min(),"max",log_probs.max())
-        print("action_mean mean",action_mean.mean(),"min",action_mean.min(),"max",action_mean.max())
-        print('alpha mean', alpha.mean(), 'min', alpha.min(), 'max', alpha.max())
+        # print("action_preds mean",action_preds.mean(),"min",action_preds.min(),"max",action_preds.max())
+        # print("log_probs mean",log_probs.mean(),"min",log_probs.min(),"max",log_probs.max())
+        # print("action_mean mean",action_mean.mean(),"min",action_mean.min(),"max",action_mean.max())
+        # print('alpha mean', alpha.mean(), 'min', alpha.min(), 'max', alpha.max())
 
 
         return action_preds, log_probs, action_mean, alpha
