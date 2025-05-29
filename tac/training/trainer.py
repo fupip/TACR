@@ -42,7 +42,7 @@ class Trainer:
 
         # Algorithm 1, line11 : Set hyperparameter alpha 0.9 ~ 2
         self.alpha = alpha
-        self.beta = 2.0                # IQL beta值 [1.0,5.0] 默认3.0稳健
+        self.beta = 1.0                # IQL beta值 [1.0,5.0] 默认3.0稳健
 
         self.start_time = time.time()
 

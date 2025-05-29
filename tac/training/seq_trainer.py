@@ -165,7 +165,10 @@ class SequenceTrainer(Trainer):
             new_Q = self.critic(states, action_preds)
             new_v = self.value_net(states)
             adv = new_Q - new_v
+            # 标准化 advantage
+            adv = (adv - adv.mean()) / (adv.std() + 1e-6)
             exp_adv = torch.exp(adv / self.beta).clamp(max=100)
+            
         
         # print("log_probs shape",log_probs.shape)
         # print("exp_adv shape",exp_adv.shape)
