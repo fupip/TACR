@@ -234,12 +234,6 @@ class TransformerActor(TrajectoryModel):
         # 使用IQL算法
         action_preds_sample, log_probs, action_preds, log_std = self.forward_dist(
             states, actions, rewards, timesteps, attention_mask=attention_mask, **kwargs)
-
-        
-
-        
-        action_preds = F.softmax(action_preds, dim=-1)  # 使用softmax替代sigmoid
-        
         print("action_preds",action_preds)
 
         return action_preds[0,-1]
