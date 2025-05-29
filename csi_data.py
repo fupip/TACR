@@ -23,7 +23,7 @@ bao_stock_dict = convert_baostock_data(stock_list)
 def get_stock_data(stock_code):
     file_path = f"datasets/{stock_code}_day.csv"
     df = pd.read_csv(file_path)
-    df["tic"] = stock_code.replace("SH","SS")
+    df["tic"] = stock_code.replace("SH","SH")
     df["date"] = pd.to_datetime(df["date"])
     df["day"] = df["date"].dt.dayofweek
     df["date"] = df["date"].dt.strftime("%Y-%m-%d")
