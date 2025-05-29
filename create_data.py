@@ -152,7 +152,7 @@ def create_data(variant):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--dataset', type=str, default='hightech') #dow, hightech, ndx, mdax, csi (kdd was already given)
+    parser.add_argument('--dataset', type=str, default='csi') #dow, hightech, ndx, mdax, csi (kdd was already given)
 
     args = parser.parse_args()
     create_data(variant=vars(args))
