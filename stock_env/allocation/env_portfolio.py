@@ -60,6 +60,7 @@ class StockPortfolioEnv(gym.Env):
             mode="",
             lookback=252,
             day=0,
+            weight_change_threshold=0.1,
     ):
 
         self.dataset = dataset
@@ -73,6 +74,7 @@ class StockPortfolioEnv(gym.Env):
         self.state_space = state_space
         self.action_space = action_space
         self.tech_indicator_list = tech_indicator_list
+        self.weight_change_threshold = weight_change_threshold
 
         # action_space normalization and shape is self.stock_dim
         self.action_space = spaces.Box(low=0, high=1, shape=(self.action_space,))
@@ -179,13 +181,20 @@ class StockPortfolioEnv(gym.Env):
 
         else:
             
-            actions = np.array([0.0,0.0,0.0,1.0])
-            print("actions",actions.tolist())
+            # actions = np.array([1.0,0.0,0.0,0.0])
+            # print("actions",actions.tolist())
             weights = actions
 
             if self.turbulence_threshold is not None:
                 if self.turbulence >= self.turbulence_threshold:
                     weights = np.zeros(len(weights), dtype=float)
+            
+            # 检查权重变化是否超过阈值，如果没有超过则保持原有仓位
+            prev_weights = self.actions_memory[-1]
+            weight_changes = np.abs(weights - prev_weights)
+            if np.all(weight_changes <= self.weight_change_threshold):
+                weights = prev_weights
+            
 
             self.actions_memory.append(weights)
             last_day_memory = self.data
