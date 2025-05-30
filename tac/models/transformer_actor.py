@@ -242,5 +242,5 @@ class TransformerActor(TrajectoryModel):
         # print("alpha mean",alpha.mean().item(),"min",alpha.min().item(),"max",alpha.max().item())
 
         result = action_preds[0,-1]
-        print(result)
+        
         return result

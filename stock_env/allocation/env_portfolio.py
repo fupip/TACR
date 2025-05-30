@@ -178,9 +178,10 @@ class StockPortfolioEnv(gym.Env):
             return self.state, self.reward, self.terminal, {}
 
         else:
+            
+            actions = np.array([0.0,0.0,0.0,1.0])
+            print("actions",actions.tolist())
             weights = actions
-            # print("actions",type(actions),actions)
-            weights = np.array([0.25,0.25,0.25,0.25])
 
             if self.turbulence_threshold is not None:
                 if self.turbulence >= self.turbulence_threshold:
