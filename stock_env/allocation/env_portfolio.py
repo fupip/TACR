@@ -179,6 +179,7 @@ class StockPortfolioEnv(gym.Env):
 
         else:
             weights = actions
+            print("actions",type(actions),actions)
 
             if self.turbulence_threshold is not None:
                 if self.turbulence >= self.turbulence_threshold:
