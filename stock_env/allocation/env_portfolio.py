@@ -280,7 +280,7 @@ class StockPortfolioEnv(gym.Env):
         self.terminal = False
         self.portfolio_return_memory = [0]
         self.actions_memory = [np.array([0.0, 1.0, 0.0])]
-        self.date_memory = [self.data.date.unique()[0]]
+        self.date_memory = [self.data.date]
         return self.state
 
     def render(self, mode="human"):
