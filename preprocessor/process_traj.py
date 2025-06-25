@@ -44,7 +44,7 @@ class trajectory:
         self.terminal = self.day >= len(self.df.index.unique()) - 1
         # print(actions)
         if self.terminal:
-            return self.state, self.reward, self.terminal, np.zeros(self.action_space, dtype=float)
+            return self.state, self.reward, self.terminal, 0
 
         else:
             
@@ -64,22 +64,42 @@ class trajectory:
             )
             ) # 这里的sum 相当于把各个列表拼接成一个列表
             
+            
+            
+            
             # print(self.state)
             # self.terminal = True
 
-            portion = (self.data.close.values / self.last_day_memory.close.values)
+            # portion = (self.data.close.values / self.last_day_memory.close.values)
             bc = []
 
             # i 是生成轨迹的种类而不是step计数
             # i 越大生成的比例越极端
             # 因为 i 从0 开始所以必须+1
             
-            for j in portion:
-                bc.append(np.exp(j * (i + 1)))   
+            # for j in portion:
+            #     bc.append(np.exp(j * (i + 1)))   
 
-            weights = self.softmax_normalization(bc)
-            weights[np.isnan(weights)] = 1.
+            # weights = self.softmax_normalization(bc)
+            # weights[np.isnan(weights)] = 1.
             
+            # ----------- 新的生成策略 -----------
+            
+            close_20_sma = self.data['close_20_sma'].values
+            close_60_sma = self.data['close_60_sma'].values
+            close_5_sma = self.data['close_5_sma'].values
+            
+            # 我需要在 5 - 20 均线 金叉时买入 
+            
+            pos = 0.0
+            
+            if close_5_sma[0] > close_20_sma[0]*(100+i*0.1)/100.0 and self.data.close.values[0] > close_60_sma[0]:
+                pos = 1.0
+            elif close_5_sma[0] < close_20_sma[0]*(100-i*0.1)/100.0 and self.data.close.values[0] < close_60_sma[0]:
+                pos = -1.0
+            else:
+                pos = 0.0
+
             # 生成完state与weights后向前推进一天
             self.last_day_memory = self.data
             # load next state
@@ -87,13 +107,13 @@ class trajectory:
             self.data = self.df.loc[self.day, :] # 获取当天数据,而不是当天之后所有数据
 
             portfolio_return = sum(
-                ((self.data.close.values / self.last_day_memory.close.values) - 1) * weights
+                ((self.data.close.values / self.last_day_memory.close.values) - 1) * pos
             )
 
             self.reward = portfolio_return
             # print(f"portfolio_return: {portfolio_return}")
 
-        return self.state, self.reward, self.terminal, weights
+        return self.state, self.reward, self.terminal, pos
 
     def reset(self):
         self.day = 0

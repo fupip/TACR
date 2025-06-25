@@ -36,6 +36,8 @@ class SequenceTrainer(Trainer):
         # Algorithm 1, line9, line10
         # Compute the target Q value
         target_Q = self.critic_target(next_state, next_action_preds)
+        
+        
         target_Q = rewards + ((1 - dones) * self.discount * target_Q).detach()
         # Get current Q estimates
         current_Q = self.critic(states, action_sample)
