@@ -114,7 +114,7 @@ class StockPortfolioEnv(gym.Env):
         # memorize portfolio return each step
         self.portfolio_return_memory = [0]
         self.actions_memory = [0.0]
-        self.date_memory = [self.data.date.unique()[0]]
+        self.date_memory = [self.data.date]
 
     def step(self, actions):
         # print(self.day)
