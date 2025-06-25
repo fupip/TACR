@@ -115,11 +115,11 @@ def create_data(variant):
 
         while True:
             # stats ,reward,terminal,weights
-            next_state, rew, new, ac = env.step(episode)
+            next_state, reward, new, action = env.step(episode)
             obs.append(ob)
             term.append(new)
-            acs.append(ac)
-            rews.append(rew)
+            acs.append(action)
+            rews.append(reward)
             ob = next_state
 
             if new:
@@ -127,9 +127,9 @@ def create_data(variant):
 
         obs = np.array(obs)
         print("obs.shape",obs.shape)
-        rews = np.array(rews)
+        rews = np.array(reward)
         term = np.array(term)
-        acs = np.array(acs)
+        acs = np.array(action)
         print("rewards",np.sum(rews))
         traj = {"observations": obs, "rewards": rews, "dones": term, "actions": acs}
         
