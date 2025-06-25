@@ -244,7 +244,7 @@ class StockPortfolioEnv(gym.Env):
 
             # save into memory
             self.portfolio_return_memory.append(portfolio_return)
-            self.date_memory.append(self.data.date.unique()[0])
+            self.date_memory.append(self.data.date)
             self.asset_memory.append(new_portfolio_value)
 
             # Equation (1), (2) : individual stocks' return * weight
