@@ -93,13 +93,15 @@ class StockPortfolioEnv(gym.Env):
                     + self.data.close.values.tolist()
             )
         else:
-            self.state = (
-                    self.data.open.values.tolist()
-                    + self.data.high.values.tolist()
-                    + self.data.low.values.tolist()
-                    + self.data.close.values.tolist()
-                    + sum([self.data[tech].values.tolist() for tech in self.tech_indicator_list],[],)
-            )
+            self.state = [
+                self.data.open,
+                self.data.high,
+                self.data.low,
+                self.data.close,
+                ] + [
+                    self.data[tech]
+                    for tech in self.tech_indicator_list
+                ]
 
         self.terminal = False
         self.turbulence_threshold = turbulence_threshold
@@ -111,7 +113,7 @@ class StockPortfolioEnv(gym.Env):
         self.asset_memory = [self.initial_amount]
         # memorize portfolio return each step
         self.portfolio_return_memory = [0]
-        self.actions_memory = [[1 / self.stock_dim] * self.stock_dim]
+        self.actions_memory = [0.0]
         self.date_memory = [self.data.date.unique()[0]]
 
     def step(self, actions):
@@ -217,18 +219,20 @@ class StockPortfolioEnv(gym.Env):
                         + self.data.close.values.tolist()
                 )
             else:
-                self.state = (
-                        self.data.open.values.tolist()
-                        + self.data.high.values.tolist()
-                        + self.data.low.values.tolist()
-                        + self.data.close.values.tolist()
-                        + sum([self.data[tech].values.tolist() for tech in self.tech_indicator_list], [], )
-                )
+                self.state = [
+                    self.data.open,
+                    self.data.high,
+                    self.data.low,
+                    self.data.close,
+                    ] + [
+                        self.data[tech]
+                        for tech in self.tech_indicator_list
+                    ]
             # print(self.state)
             # calcualte portfolio return
             # Equation (19) : Portfolio value
-            portfolio_return = sum(
-                ((self.data.close.values / last_day_memory.close.values) - 1) * weights - self.transaction_cost * abs(weights - self.actions_memory[-2]))
+            portfolio_return = 
+                ((self.data.close / last_day_memory.close) - 1) * weights - self.transaction_cost * abs(weights - self.actions_memory[-2])
 
             # update portfolio value
             new_portfolio_value = self.portfolio_value * (1 + portfolio_return)

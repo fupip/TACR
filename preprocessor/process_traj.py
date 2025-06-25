@@ -23,19 +23,15 @@ class trajectory:
         self.tech_indicator_list = tech_indicator_list
 
         self.data = self.df.loc[self.day, :]
-        self.state = (
-                self.data.open.values.tolist()
-                + self.data.high.values.tolist()
-                + self.data.low.values.tolist()
-                + self.data.close.values.tolist()
-                + sum(
-            [
-                self.data[tech].values.tolist()
-                for tech in self.tech_indicator_list
-            ],
-            [],
-        )
-        )
+        self.state = [
+                self.data.open,
+                self.data.high,
+                self.data.low,
+                self.data.close,
+        ] + [
+            self.data[tech]
+            for tech in self.tech_indicator_list
+        ]
         self.terminal = False
         self.last_day_memory = self.data
 
@@ -50,22 +46,15 @@ class trajectory:
             
             self.data = self.df.loc[self.day, :]
             
-            self.state = (
-                    self.data.open.values.tolist()
-                    + self.data.high.values.tolist()
-                    + self.data.low.values.tolist()
-                    + self.data.close.values.tolist()
-                    + sum(
-                [
-                    self.data[tech].values.tolist()
+            self.state = [
+                self.data.open,
+                self.data.high,
+                self.data.low,
+                self.data.close,
+                ] + [
+                    self.data[tech]
                     for tech in self.tech_indicator_list
-                ],
-                [],
-            )
-            ) # 这里的sum 相当于把各个列表拼接成一个列表
-            
-            
-            
+                ]
             
             # print(self.state)
             # self.terminal = True
@@ -85,17 +74,17 @@ class trajectory:
             
             # ----------- 新的生成策略 -----------
             
-            close_20_sma = self.data['close_20_sma'].values
-            close_60_sma = self.data['close_60_sma'].values
-            close_5_sma = self.data['close_5_sma'].values
+            close_20_sma = self.data['close_20_sma']
+            close_60_sma = self.data['close_60_sma']
+            close_5_sma = self.data['close_5_sma']
             
             # 我需要在 5 - 20 均线 金叉时买入 
             
             pos = 0.0
             
-            if close_5_sma[0] > close_20_sma[0]*(100+i*0.1)/100.0 and self.data.close.values[0] > close_60_sma[0]:
+            if close_5_sma > close_20_sma*(100 + i*0.2)/100.0 and self.data.close > close_60_sma:
                 pos = 1.0
-            elif close_5_sma[0] < close_20_sma[0]*(100-i*0.1)/100.0 and self.data.close.values[0] < close_60_sma[0]:
+            elif close_5_sma < close_20_sma*(100 - i*0.2)/100.0 and self.data.close < close_60_sma:
                 pos = -1.0
             else:
                 pos = 0.0
@@ -106,11 +95,12 @@ class trajectory:
             self.day += 1
             self.data = self.df.loc[self.day, :] # 获取当天数据,而不是当天之后所有数据
 
-            portfolio_return = sum(
-                ((self.data.close.values / self.last_day_memory.close.values) - 1) * pos
-            )
-
+            portfolio_return = ((self.data.close / self.last_day_memory.close) - 1) * pos
+            
+            # print("pos: ", pos, "portfolio_return: ", portfolio_return)
+            
             self.reward = portfolio_return
+            
             # print(f"portfolio_return: {portfolio_return}")
 
         return self.state, self.reward, self.terminal, pos
@@ -118,20 +108,15 @@ class trajectory:
     def reset(self):
         self.day = 0
         self.data = self.df.loc[self.day, :]
-        self.state = (
-                self.data.open.values.tolist()
-                + self.data.high.values.tolist()
-                + self.data.low.values.tolist()
-                + self.data.close.values.tolist()
-                + sum(
-            [
-                self.data[tech].values.tolist()
-                for tech in self.tech_indicator_list
-            ],
-            [],
-        )
-
-        )
+        self.state = [
+                self.data.open,
+                self.data.high,
+                self.data.low,
+                self.data.close,
+        ] + [
+            self.data[tech]
+            for tech in self.tech_indicator_list
+        ]
         self.terminal = False
         return self.state
 
