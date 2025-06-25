@@ -126,7 +126,7 @@ def main(variant):
             print(traj['actions'][si:si + max_len])
             print(traj['actions'][si:si + max_len].shape)
             print(act_dim)
-            print(traj['actions'][si:si + max_len].reshape(1, -1, act_dim))
+            # print(traj['actions'][si:si + max_len].reshape(1, -1, act_dim))
             
             actions = np.array(traj['actions'][si:si + max_len])
             if actions.dtype == object:

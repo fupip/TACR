@@ -40,7 +40,7 @@ class trajectory:
         self.terminal = self.day >= len(self.df.index.unique()) - 1
         # print(actions)
         if self.terminal:
-            return self.state, self.reward, self.terminal, 0
+            return self.state, self.reward, self.terminal, np.array([0.0, 1.0, 0.0])
 
         else:
             
