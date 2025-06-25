@@ -241,6 +241,8 @@ class StockPortfolioEnv(gym.Env):
             # update portfolio value
             new_portfolio_value = self.portfolio_value * (1 + portfolio_return)
             self.portfolio_value = new_portfolio_value
+            print("new_portfolio_value: ", new_portfolio_value)
+            
 
             # save into memory
             self.portfolio_return_memory.append(portfolio_return)
