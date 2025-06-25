@@ -123,10 +123,7 @@ def main(variant):
             s.append(traj['observations'][si:si + max_len].reshape(1, -1, state_dim))
             
             print(traj['actions'])
-            print(traj['actions'][si:si + max_len])
-            print(traj['actions'][si:si + max_len].shape)
-            print(act_dim)
-            print(traj['actions'][si:si + max_len].reshape(1, -1, act_dim))
+            
             
             
             a.append(traj['actions'][si:si + max_len].reshape(1, -1, act_dim))
