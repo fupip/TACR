@@ -113,7 +113,7 @@ class StockPortfolioEnv(gym.Env):
         self.asset_memory = [self.initial_amount]
         # memorize portfolio return each step
         self.portfolio_return_memory = [0]
-        self.actions_memory = [0.0]
+        self.actions_memory = [np.array([0.0, 1.0, 0.0])]
         self.date_memory = [self.data.date]
 
     def step(self, actions):
@@ -185,7 +185,10 @@ class StockPortfolioEnv(gym.Env):
             
             # actions = np.array([1.0,0.0,0.0,0.0])
             # print("actions",actions.tolist())
-            weights = actions
+            # weights = actions
+            
+            weights = torch.argmax(actions, dim=-1) - 1.0
+            print("weights: ", weights)
 
             if self.turbulence_threshold is not None:
                 if self.turbulence >= self.turbulence_threshold:
@@ -262,18 +265,21 @@ class StockPortfolioEnv(gym.Env):
                     + self.data.close.values.tolist()
             )
         else:
-            self.state = (
-                    self.data.open.values.tolist()
-                    + self.data.high.values.tolist()
-                    + self.data.low.values.tolist()
-                    + self.data.close.values.tolist()
-                    + sum([self.data[tech].values.tolist() for tech in self.tech_indicator_list], [], )
-            )
+            self.state = [
+                self.data.open,
+                self.data.high,
+                self.data.low,
+                self.data.close,
+                ] + [
+                    self.data[tech]
+                    for tech in self.tech_indicator_list
+                ]
+
 
         self.portfolio_value = self.initial_amount
         self.terminal = False
         self.portfolio_return_memory = [0]
-        self.actions_memory = [[1 / self.stock_dim] * self.stock_dim]
+        self.actions_memory = [np.array([0.0, 1.0, 0.0])]
         self.date_memory = [self.data.date.unique()[0]]
         return self.state
 
