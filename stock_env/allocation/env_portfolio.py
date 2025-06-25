@@ -154,31 +154,31 @@ class StockPortfolioEnv(gym.Env):
                 print("Sharpe: ", round(sharpe, 3), )
             print("=================================")
 
-            if self.mode == "test":
-                df_actions = self.save_action_memory()
-                df_actions.to_csv(
-                    "results/actions_{}.csv".format(
-                        self.mode
-                    )
-                )
+            # if self.mode == "test":
+            #     df_actions = self.save_action_memory()
+            #     df_actions.to_csv(
+            #         "results/actions_{}.csv".format(
+            #             self.mode
+            #         )
+            #     )
 
-                df_asset = self.save_asset_memory()
-                df_asset.to_csv(
-                    "results/{}_asset_{}.csv".format(
-                        self.dataset,
-                        self.mode
-                    )
-                )
+            #     df_asset = self.save_asset_memory()
+            #     df_asset.to_csv(
+            #         "results/{}_asset_{}.csv".format(
+            #             self.dataset,
+            #             self.mode
+            #         )
+            #     )
 
-                plt.plot(df_asset, "r")
-                plt.savefig(
-                    "results/{}_account_value_{}.png".format(
-                        self.dataset,
-                        self.mode
-                    ),
-                    index=False,
-                )
-                plt.close()
+            #     plt.plot(df_asset, "r")
+            #     plt.savefig(
+            #         "results/{}_account_value_{}.png".format(
+            #             self.dataset,
+            #             self.mode
+            #         ),
+            #         index=False,
+            #     )
+            #     plt.close()
 
             return self.state, self.reward, self.terminal, {}
 
