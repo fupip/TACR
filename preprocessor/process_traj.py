@@ -81,7 +81,7 @@ class trajectory:
             # 我需要在 5 - 20 均线 金叉时买入 
             
             pos = 0.0
-            action = np.zeros(self.action_space)
+            action = np.array([0.0, 1.0, 0.0])
             
             if close_5_sma > close_20_sma*(100 + i*0.2)/100.0 and self.data.close > close_60_sma:
                 pos = 1.0
@@ -106,7 +106,7 @@ class trajectory:
             self.reward = portfolio_return
             
             # print(f"portfolio_return: {portfolio_return}")
-
+        print("action: ", action)
         return self.state, self.reward, self.terminal, action
 
     def reset(self):

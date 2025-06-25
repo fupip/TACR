@@ -129,7 +129,7 @@ def create_data(variant):
         print("obs.shape",obs.shape)
         rews = np.array(rews)
         term = np.array(term)
-        acs = np.array(action)
+        acs = np.array(acs)
         print("rewards",np.sum(rews))
         traj = {"observations": obs, "rewards": rews, "dones": term, "actions": acs}
         
