@@ -188,7 +188,7 @@ class StockPortfolioEnv(gym.Env):
             # print("actions",actions.tolist())
             # weights = actions
             
-            weights = torch.argmax(actions, dim=-1) - 1.0
+            weights = np.argmax(actions) - 1.0
             print("weights: ", weights)
 
             if self.turbulence_threshold is not None:
