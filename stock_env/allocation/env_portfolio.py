@@ -6,6 +6,7 @@ import pandas as pd
 from gym import spaces
 from gym.utils import seeding
 import os
+import torch
 
 matplotlib.use("Agg")
 
