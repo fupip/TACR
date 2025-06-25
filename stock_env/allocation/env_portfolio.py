@@ -248,7 +248,7 @@ class StockPortfolioEnv(gym.Env):
             self.asset_memory.append(new_portfolio_value)
 
             # Equation (1), (2) : individual stocks' return * weight
-            self.reward = sum(((self.data.close.values / last_day_memory.close.values) - 1) * weights)
+            self.reward = ((self.data.close / last_day_memory.close) - 1) * weights
 
         return self.state, self.reward, self.terminal, {}
 
@@ -301,7 +301,7 @@ class StockPortfolioEnv(gym.Env):
 
         action_list = self.actions_memory
         df_actions = pd.DataFrame(action_list)
-        df_actions.columns = self.data.tic.values
+        df_actions.columns = self.data.tic
         df_actions.index = df_date.date
         # df_actions = pd.DataFrame({'date':date_list,'actions':action_list})
         return df_actions
