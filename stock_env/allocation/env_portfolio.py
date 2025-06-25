@@ -188,6 +188,8 @@ class StockPortfolioEnv(gym.Env):
             # print("actions",actions.tolist())
             # weights = actions
             
+            
+            self.actions_memory.append(actions)
             weights = np.argmax(actions) - 1.0
             print("weights: ", weights)
 
@@ -196,13 +198,13 @@ class StockPortfolioEnv(gym.Env):
                     weights = np.zeros(len(weights), dtype=float)
             
             # 检查权重变化是否超过阈值，如果没有超过则保持原有仓位
-            prev_weights = self.actions_memory[-1]
-            weight_changes = np.abs(weights - prev_weights)
-            if np.all(weight_changes <= self.weight_change_threshold):
-                weights = prev_weights
+            # prev_weights = self.actions_memory[-1]
+            # weight_changes = np.abs(weights - prev_weights)
+            # if np.all(weight_changes <= self.weight_change_threshold):
+            #     weights = prev_weights
             
 
-            self.actions_memory.append(weights)
+            
             last_day_memory = self.data
 
             # load next state
