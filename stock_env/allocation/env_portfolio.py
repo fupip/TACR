@@ -235,6 +235,8 @@ class StockPortfolioEnv(gym.Env):
             # print(self.state)
             # calcualte portfolio return
             # Equation (19) : Portfolio value
+            
+            print("action_memory[-2]: ", self.actions_memory[-2])
             portfolio_return = ((self.data.close / last_day_memory.close) - 1) * weights - self.transaction_cost * abs(weights - self.actions_memory[-2])
             print("portfolio_return: ", portfolio_return)
 
