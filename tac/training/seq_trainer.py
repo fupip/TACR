@@ -5,7 +5,7 @@ from tac.training.trainer import Trainer
 
 class SequenceTrainer(Trainer):
 
-    def train_step(self):
+    def train_step(self,step):
         # Algorithm 1, line6 : Sample a random minibatch
         states, actions, rewards, dones, next_state, next_actions, next_rewards, \
         timesteps, next_timesteps, attention_mask = self.get_batch(self.batch_size)
@@ -61,7 +61,7 @@ class SequenceTrainer(Trainer):
         policy_q = Q.unsqueeze(1)
         
         # log-sum-exp 计算
-        cat_q = torch.cat([random_q, data_q, policy_q], dim=1)
+        cat_q = torch.cat([random_q, policy_q], dim=1)
         logsumexp_q = torch.logsumexp(cat_q, dim=1, keepdim=True)
         
         # CQL 正则项 = alpha * (logsumexp_q - q_data)
