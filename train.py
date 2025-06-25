@@ -128,8 +128,12 @@ def main(variant):
             print(act_dim)
             print(traj['actions'][si:si + max_len].reshape(1, -1, act_dim))
             
+            actions = np.array(traj['actions'][si:si + max_len])
+            if actions.dtype == object:
+                actions = np.stack(actions, axis=0)
             
-            a.append(traj['actions'][si:si + max_len].reshape(1, -1, act_dim))
+            
+            a.append(actions.reshape(1, -1, act_dim))
             r.append(traj['rewards'][si:si + max_len].reshape(1, -1, 1))
             dd.append(traj['dones'][si:si + max_len].reshape(1, -1, 1))
             # print("r",r)
