@@ -251,6 +251,12 @@ def main(variant):
     warmup_steps = variant['warmup_steps']
     total_steps = variant['max_iters'] * variant['num_steps_per_iter']  # 总训练步数
     
+    print(f"学习率调度配置:")
+    print(f"  初始学习率: {variant['learning_rate']}")
+    print(f"  Warmup步数: {warmup_steps}")
+    print(f"  总训练步数: {total_steps}")
+    print(f"  Decay步数: {max(0, total_steps - warmup_steps)}")
+    
     optimizer = torch.optim.AdamW(
         model.parameters(),
         lr=variant['learning_rate'],
@@ -262,6 +268,9 @@ def main(variant):
         if step < warmup_steps:
             # Warmup 阶段：线性增长
             return (step + 1) / warmup_steps
+        elif total_steps <= warmup_steps:
+            # 如果总训练步数不超过warmup步数，保持最大学习率
+            return 1.0
         else:
             # Warmup 后：余弦衰减
             progress = (step - warmup_steps) / (total_steps - warmup_steps)
@@ -325,7 +334,7 @@ if __name__ == '__main__':
     parser.add_argument('--learning_rate', '-lr', type=float, default=1e-4)
     parser.add_argument('--critic_learning_rate', type=float, default=1e-6) # 1e-4 (hightech), 1e-6 (others)
     parser.add_argument('--weight_decay', '-wd', type=float, default=1e-4)
-    parser.add_argument('--warmup_steps', type=int, default=10000)
+    parser.add_argument('--warmup_steps', type=int, default=2000)
     parser.add_argument('--max_iters', type=int, default=10)
     parser.add_argument('--num_steps_per_iter', type=int, default=1000)
     parser.add_argument('--device', type=str, default='cuda')
