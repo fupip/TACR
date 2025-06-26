@@ -71,7 +71,7 @@ class Trainer:
                 q_loss,policy_loss,value_loss = self.train_step_iql(self.total_it)
             q_losses.append(q_loss)
             policy_losses.append(policy_loss)
-            value_losses.append(value_loss)
+            value_losses.append(value_loss if value_loss is not None else 0)
 
         # logs['time/training'] = time.time() - train_start
         logs['total_time'] = time.time() - self.start_time
