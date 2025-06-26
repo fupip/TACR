@@ -294,7 +294,15 @@ def main(variant):
         # wandb.watch(model)  # wandb has some bug
 
     for iter in range(variant['max_iters']):
+        # 获取当前学习率
+        current_lr = optimizer.param_groups[0]['lr']
+        print(f'Iteration {iter + 1}: Learning Rate = {current_lr:.8f}')
+        
         outputs = trainer.train_iteration(num_steps=variant['num_steps_per_iter'], iter_num=iter + 1, print_logs=True)
+        
+        # 在outputs中添加学习率信息
+        outputs['learning_rate'] = current_lr
+        
         if log_to_wandb:
             wandb.log(outputs)
 

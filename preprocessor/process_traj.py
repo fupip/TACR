@@ -1,4 +1,5 @@
 import numpy as np
+from .strategies import create_strategy, MovingAverageStrategy
 
 
 class trajectory:
@@ -12,6 +13,8 @@ class trajectory:
             action_space,
             tech_indicator_list,
             day=0,
+            strategy_name='moving_average',
+            strategy_kwargs=None,
     ):
 
         self.dataset = dataset
@@ -21,6 +24,13 @@ class trajectory:
         self.state_space = state_space
         self.action_space = action_space
         self.tech_indicator_list = tech_indicator_list
+        
+        # 初始化策略
+        if strategy_kwargs is None:
+            strategy_kwargs = {}
+        self.strategy_name = strategy_name
+        self.strategy_kwargs = strategy_kwargs
+        self.strategy = None  # 将在step方法中根据i参数创建
 
         self.data = self.df.loc[self.day, :]
         self.state = [
@@ -72,26 +82,17 @@ class trajectory:
             # weights = self.softmax_normalization(bc)
             # weights[np.isnan(weights)] = 1.
             
-            # ----------- 新的生成策略 -----------
+            # ----------- 使用策略系统生成交易信号 -----------
             
-            close_20_sma = self.data['close_20_sma']
-            close_60_sma = self.data['close_60_sma']
-            close_5_sma = self.data['close_5_sma']
+            # 根据策略强度参数i创建策略实例（如果还没有创建或参数改变）
+            if self.strategy is None or self.strategy.strategy_id != i:
+                self.strategy = create_strategy(self.strategy_name, strategy_id=i, **self.strategy_kwargs)
             
-            # 我需要在 5 - 20 均线 金叉时买入 
-            
-            pos = 0.0
-            action = np.array([0.0, 1.0, 0.0])
-            
-            if close_5_sma > close_20_sma*(100 + i*0.2)/100.0 and self.data.close > close_60_sma:
-                pos = 1.0
-                action = np.array([0.0, 0.0, 1.0])
-            elif close_5_sma < close_20_sma*(100 - i*0.2)/100.0 and self.data.close < close_60_sma:
-                pos = -1.0
-                action = np.array([1.0, 0.0, 0.0])
-            else:
-                pos = 0.0
-                action = np.array([0.0, 1.0, 0.0])
+            # 使用策略计算持仓和动作
+            pos, action = self.strategy.calculate_position_and_action(
+                data=self.data, 
+                last_day_data=self.last_day_memory
+            )
 
             # 生成完state与weights后向前推进一天
             self.last_day_memory = self.data
