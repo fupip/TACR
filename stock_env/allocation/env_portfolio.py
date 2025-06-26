@@ -248,7 +248,7 @@ class StockPortfolioEnv(gym.Env):
             # update portfolio value
             day_close_rate = (self.data.close / last_day_memory.close - 1)*100
             print("--------------------------------------------")
-            print(f"trade date        : ", self.data.date)
+            print(f"trade date        : {self.data.date}")
             print(f"old position      : {old_pos:.2f}")
             print(f"new position      : {new_pos:.2f}")
             print(f"preday close      : {last_day_memory.close:.2f}")

@@ -5,7 +5,7 @@ from tac.training.trainer import Trainer
 
 class SequenceTrainer(Trainer):
 
-    def train_step(self,step):
+    def train_step_cql(self,step):
         # Algorithm 1, line6 : Sample a random minibatch
         states, actions, rewards, dones, next_state, next_actions, next_rewards, \
         timesteps, next_timesteps, attention_mask = self.get_batch(self.batch_size)
