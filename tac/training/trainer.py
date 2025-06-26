@@ -87,7 +87,7 @@ class Trainer:
             print('=' * 80)
             print(f'Iteration {iter_num}')
             for k, v in logs.items():
-                print(f'{k} \t: {v}')
+                print(f'{k:15s} \t: {v}')
 
         return logs
 

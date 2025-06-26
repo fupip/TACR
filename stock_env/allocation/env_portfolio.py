@@ -138,7 +138,7 @@ class StockPortfolioEnv(gym.Env):
 
             print("=================================")
             print("begin_total_asset:{}".format(self.asset_memory[0]))
-            print("end_total_asset:{}".format(int(self.portfolio_value)))
+            print("end_total_asset  :{}".format(int(self.portfolio_value)))
 
             df_daily_return = pd.DataFrame(self.portfolio_return_memory)
             df_daily_return.columns = ["daily_return"]

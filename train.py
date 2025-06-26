@@ -234,6 +234,20 @@ def main(variant):
 
 
     model = model.to(device=device)
+    
+    # 加载预训练模型（如果指定了的话）
+    if variant.get('load_model'):
+        model_path = variant['load_model']
+        if not model_path.endswith('.pt'):
+            model_path += '.pt'
+        try:
+            model.load_state_dict(torch.load(model_path, map_location=device))
+            print(f"load model success: {model_path}")
+        except FileNotFoundError:
+            print(f"load model failed: {model_path} not found, train from scratch")
+        except Exception as e:
+            print(f"load model failed: {e}, train from scratch")
+    
     warmup_steps = variant['warmup_steps']
     optimizer = torch.optim.AdamW(
         model.parameters(),
@@ -299,6 +313,7 @@ if __name__ == '__main__':
     parser.add_argument('--device', type=str, default='cuda')
     parser.add_argument('--log_to_wandb', '-w', type=bool, default=False)
     parser.add_argument('--mode', type=str, default='tacr')
+    parser.add_argument('--load_model', type=str, default=None, help='load model from path')
 
     args = parser.parse_args()
     print(args)
