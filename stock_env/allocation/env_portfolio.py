@@ -241,7 +241,10 @@ class StockPortfolioEnv(gym.Env):
             print("action_memory[-2]: ", self.actions_memory[-2])
             old_weights = np.argmax(self.actions_memory[-2]) - 1.0
             print("old_weights: ", old_weights)
-            portfolio_return = ((self.data.close / last_day_memory.close) - 1) * weights - self.transaction_cost * abs(weights - old_weights)
+            if weights > 0:
+                portfolio_return = ((self.data.close / last_day_memory.close) - 1) * weights - self.transaction_cost * abs(weights - old_weights)
+            else:
+                portfolio_return = 0.0
             print("portfolio_return: ", portfolio_return)
 
             # update portfolio value
