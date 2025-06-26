@@ -57,7 +57,7 @@ class Trainer:
         print("num_steps",num_steps)
         for _ in tqdm(range(num_steps), desc="train progress"):
             self.total_it += 1
-            train_loss = self.train_step_cql(self.total_it)
+            train_loss = self.train_step(self.total_it)
             train_losses.append(train_loss)
 
         logs['time/training'] = time.time() - train_start
