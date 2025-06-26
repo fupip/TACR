@@ -249,6 +249,7 @@ class StockPortfolioEnv(gym.Env):
             day_close_rate = (self.data.close / last_day_memory.close - 1)*100
             print("--------------------------------------------")
             print(f"trade date        : {self.data.date}")
+            print(f"actions           : {actions}")
             print(f"old position      : {old_pos:.2f}")
             print(f"new position      : {new_pos:.2f}")
             print(f"preday close      : {last_day_memory.close:.2f}")
@@ -260,6 +261,7 @@ class StockPortfolioEnv(gym.Env):
             self.portfolio_value = new_portfolio_value
             print(f"new amount        : {new_portfolio_value:.2f}")
             print(f"today return      : {portfolio_return*100.0:.2f} %")
+            print("--------------------------------------------")
             
 
             # save into memory
