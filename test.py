@@ -13,10 +13,11 @@ import os
 os.environ['KMP_DUPLICATE_LIB_OK']='True'
 
 def experiment(variant):
+    mode = variant.get('mode', 'tacr')
     device = variant.get('device', 'cuda')
 
     env_name, dataset = variant['env'], variant['dataset']
-    group_name = f'{env_name}-{dataset}'
+    group_name = f'{env_name}-{dataset}-{mode}'
 
     train = pd.read_csv("datasets/" + dataset+"_train.csv", index_col=[0])
     trade = pd.read_csv("datasets/" + dataset + "_trade.csv", index_col=[0])
@@ -108,6 +109,7 @@ if __name__ == '__main__':
     parser.add_argument('--dropout', type=float, default=0.1)
     parser.add_argument('--activation_function', type=str, default='relu')
     parser.add_argument('--device', type=str, default='cuda')
+    parser.add_argument('--mode', type=str, default='tacr')
 
     args = parser.parse_args()
     experiment(variant=vars(args))
