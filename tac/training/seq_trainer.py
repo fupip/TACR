@@ -5,6 +5,7 @@ from tac.training.trainer import Trainer
 
 class SequenceTrainer(Trainer):
     
+    # 原始TACR的训练方法
     def train_step(self,step):
         # Algorithm 1, line6 : Sample a random minibatch
         states, actions, rewards, dones, next_state, next_actions, next_rewards, \
@@ -66,6 +67,8 @@ class SequenceTrainer(Trainer):
 
         return actor_loss.detach().cpu().item()
 
+
+    # CQL 的方法
     def train_step_cql(self,step):
         # Algorithm 1, line6 : Sample a random minibatch
         states, actions, rewards, dones, next_state, next_actions, next_rewards, \
@@ -166,6 +169,7 @@ class SequenceTrainer(Trainer):
 
         return actor_loss.detach().cpu().item()
     
+    # IQL 的方法
     def train_step_iql(self,step):
         # Algorithm 1, line6 : Sample a random minibatch
         states, actions, rewards, dones, next_state, next_actions, next_rewards, \

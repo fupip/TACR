@@ -21,6 +21,8 @@ def main(variant):
 
     train = pd.read_csv("datasets/"+dataset+"_train.csv", index_col=[0])
     max_ep_len = train.index[-1]
+    
+    mode = variant.get('mode', 'tacr')
 
     # Load suboptimal trajectories
     dataset_path = f'{"trajectory/" + variant["dataset"] + "_traj.pkl"}'
@@ -254,6 +256,7 @@ def main(variant):
         state_std=state_std,
         alpha=variant['alpha'],
         crtic_lr=variant['critic_learning_rate'],
+        mode=mode
     )
 
     if log_to_wandb:
@@ -294,6 +297,7 @@ if __name__ == '__main__':
     parser.add_argument('--num_steps_per_iter', type=int, default=5000)
     parser.add_argument('--device', type=str, default='cuda')
     parser.add_argument('--log_to_wandb', '-w', type=bool, default=False)
+    parser.add_argument('--mode', type=str, default='tacr')
 
     args = parser.parse_args()
     print(args)

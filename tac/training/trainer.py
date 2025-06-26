@@ -43,6 +43,8 @@ class Trainer:
         # Algorithm 1, line11 : Set hyperparameter alpha 0.9 ~ 2
         self.alpha = alpha
         self.beta = 1.0                # IQL beta值 [1.0,5.0] 默认3.0稳健
+        
+        self.mode = mode
 
         self.start_time = time.time()
 
@@ -57,7 +59,12 @@ class Trainer:
         print("num_steps",num_steps)
         for _ in tqdm(range(num_steps), desc="train progress"):
             self.total_it += 1
-            train_loss = self.train_step(self.total_it)
+            if self.mode == 'tacr':
+                train_loss = self.train_step(self.total_it)
+            elif self.mode == 'cql':
+                train_loss = self.train_step_cql(self.total_it)
+            elif self.mode == 'iql':
+                train_loss = self.train_step_iql(self.total_it)
             train_losses.append(train_loss)
 
         logs['time/training'] = time.time() - train_start
