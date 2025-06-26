@@ -251,11 +251,11 @@ def main(variant):
     warmup_steps = variant['warmup_steps']
     total_steps = variant['max_iters'] * variant['num_steps_per_iter']  # 总训练步数
     
-    print(f"学习率调度配置:")
-    print(f"  初始学习率: {variant['learning_rate']}")
-    print(f"  Warmup步数: {warmup_steps}")
-    print(f"  总训练步数: {total_steps}")
-    print(f"  Decay步数: {max(0, total_steps - warmup_steps)}")
+    print(f"Learning Rate Schedule Configuration:")
+    print(f"  Initial Learning Rate: {variant['learning_rate']}")
+    print(f"  Warmup Steps: {warmup_steps}")
+    print(f"  Total Training Steps: {total_steps}")
+    print(f"  Decay Steps: {max(0, total_steps - warmup_steps)}")
     
     optimizer = torch.optim.AdamW(
         model.parameters(),
