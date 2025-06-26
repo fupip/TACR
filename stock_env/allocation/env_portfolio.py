@@ -242,10 +242,7 @@ class StockPortfolioEnv(gym.Env):
             
             # print("action_memory[-2]: ", self.actions_memory[-2])
             
-            if new_pos > 0:
-                portfolio_return = ((self.data.close / last_day_memory.close) - 1) * new_pos - self.transaction_cost * abs(new_pos - old_pos)
-            else:
-                portfolio_return = 0.0
+            portfolio_return = ((self.data.close / last_day_memory.close) - 1) * new_pos - self.transaction_cost * abs(new_pos - old_pos)
             # print("portfolio_return  : ", portfolio_return)
 
             # update portfolio value
