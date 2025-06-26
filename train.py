@@ -235,7 +235,7 @@ def main(variant):
 
     model = model.to(device=device)
     
-    # 加载预训练模型（如果指定了的话）
+    # Load pre-trained model if specified
     if variant.get('load_model'):
         model_path = variant['load_model']
         if not model_path.endswith('.pt'):
@@ -263,16 +263,16 @@ def main(variant):
         weight_decay=variant['weight_decay'],
     )
     
-    # 改进的学习率调度：warmup + cosine decay
+    # Improved learning rate schedule: warmup + cosine decay
     def lr_lambda(step):
         if step < warmup_steps:
-            # Warmup 阶段：线性增长
+            # Warmup phase: linear growth
             return (step + 1) / warmup_steps
         elif total_steps <= warmup_steps:
-            # 如果总训练步数不超过warmup步数，保持最大学习率
+            # If total training steps don't exceed warmup steps, maintain max learning rate
             return 1.0
         else:
-            # Warmup 后：余弦衰减
+            # Post-warmup: cosine decay
             progress = (step - warmup_steps) / (total_steps - warmup_steps)
             return 0.5 * (1.0 + np.cos(np.pi * progress))
     
@@ -303,13 +303,13 @@ def main(variant):
         # wandb.watch(model)  # wandb has some bug
 
     for iter in range(variant['max_iters']):
-        # 获取当前学习率
+        # Get current learning rate
         current_lr = optimizer.param_groups[0]['lr']
         print(f'Iteration {iter + 1}: Learning Rate = {current_lr:.8f}')
         
         outputs = trainer.train_iteration(num_steps=variant['num_steps_per_iter'], iter_num=iter + 1, print_logs=True)
         
-        # 在outputs中添加学习率信息
+        # Add learning rate info to outputs
         outputs['learning_rate'] = current_lr
         
         if log_to_wandb:
@@ -334,7 +334,7 @@ if __name__ == '__main__':
     parser.add_argument('--learning_rate', '-lr', type=float, default=1e-4)
     parser.add_argument('--critic_learning_rate', type=float, default=1e-6) # 1e-4 (hightech), 1e-6 (others)
     parser.add_argument('--weight_decay', '-wd', type=float, default=1e-4)
-    parser.add_argument('--warmup_steps', type=int, default=2000)
+    parser.add_argument('--warmup_steps', type=int, default=5000)
     parser.add_argument('--max_iters', type=int, default=10)
     parser.add_argument('--num_steps_per_iter', type=int, default=1000)
     parser.add_argument('--device', type=str, default='cuda')
