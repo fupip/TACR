@@ -243,16 +243,16 @@ class SequenceTrainer(Trainer):
         actor_loss = -(exp_adv * log_probs).mean()
         
         
-        if step % 1000 == 0:
-            print("new_Q mean       ",new_Q.mean().item(),"min",new_Q.min().item(),"max",new_Q.max().item())
-            print("new_v mean       ",new_v.mean().item(),"min",new_v.min().item(),"max",new_v.max().item())
-            print("action_preds mean",action_preds.mean().item(),"min",action_preds.min().item(),"max",action_preds.max().item())
-            print("log_probs mean   ",log_probs.mean().item(),"min",log_probs.min().item(),"max",log_probs.max().item())
-            print("action_mean mean ",action_mean.mean().item(),"min",action_mean.min().item(),"max",action_mean.max().item())
-            print("alpha mean       ",alpha.mean().item(),"min",alpha.min().item(),"max",alpha.max().item())
-            print("adv mean         ",adv.mean().item(),"min",adv.min().item(),"max",adv.max().item())
-            print("exp_adv mean     ",exp_adv.mean().item(),"min",exp_adv.min().item(),"max",exp_adv.max().item())
-            print("--[actor_loss ]--",actor_loss.mean().item(),"min",actor_loss.min().item(),"max",actor_loss.max().item())
+        # if step % 1000 == 0:
+        #     print("new_Q mean       ",new_Q.mean().item(),"min",new_Q.min().item(),"max",new_Q.max().item())
+        #     print("new_v mean       ",new_v.mean().item(),"min",new_v.min().item(),"max",new_v.max().item())
+        #     print("action_preds mean",action_preds.mean().item(),"min",action_preds.min().item(),"max",action_preds.max().item())
+        #     print("log_probs mean   ",log_probs.mean().item(),"min",log_probs.min().item(),"max",log_probs.max().item())
+        #     print("action_mean mean ",action_mean.mean().item(),"min",action_mean.min().item(),"max",action_mean.max().item())
+        #     print("alpha mean       ",alpha.mean().item(),"min",alpha.min().item(),"max",alpha.max().item())
+        #     print("adv mean         ",adv.mean().item(),"min",adv.min().item(),"max",adv.max().item())
+        #     print("exp_adv mean     ",exp_adv.mean().item(),"min",exp_adv.min().item(),"max",exp_adv.max().item())
+        #     print("--[actor_loss ]--",actor_loss.mean().item(),"min",actor_loss.min().item(),"max",actor_loss.max().item())
 
 
         # Optimize the actor 训练主网络
