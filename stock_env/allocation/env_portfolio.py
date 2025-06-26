@@ -255,10 +255,11 @@ class StockPortfolioEnv(gym.Env):
             print(f"current day close : {self.data.close:.2f}")
             print(f"day close rate    : {day_close_rate:.2f} %")
             print(f"amount value      : {self.portfolio_value:.2f}")
-            print(f"today return      : {portfolio_return*100.0:.f} %")
+            
             new_portfolio_value = self.portfolio_value * (1 + portfolio_return)
             self.portfolio_value = new_portfolio_value
             print(f"new amount        : {new_portfolio_value:.2f}")
+            print(f"today return      : {portfolio_return*100.0:.2f} %")
             
 
             # save into memory
