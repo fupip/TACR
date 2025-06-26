@@ -189,12 +189,11 @@ class StockPortfolioEnv(gym.Env):
             # weights = actions
             
             old_pos = np.argmax(self.actions_memory[-1]) - 1.0
-            print("--------------------------------------------")
-            print("old position      : ", old_pos)
+            
             
             self.actions_memory.append(actions)
             new_pos = np.argmax(actions) - 1.0
-            print("new position      : ", new_pos)
+            
 
             # if self.turbulence_threshold is not None:
             #     if self.turbulence >= self.turbulence_threshold:
@@ -250,14 +249,19 @@ class StockPortfolioEnv(gym.Env):
             # print("portfolio_return  : ", portfolio_return)
 
             # update portfolio value
-            print("trade date        : ", self.data.date)
-            print("preday close      : ", last_day_memory.close)
-            print("current day close : ", self.data.close)
-            print("amount value      : ", self.portfolio_value)
-            print("today return      : ", portfolio_return)
+            day_close_rate = (self.data.close / last_day_memory.close - 1)*100
+            print("--------------------------------------------")
+            print(f"trade date        : ", self.data.date)
+            print(f"old position      : {old_pos:.2f}")
+            print(f"new position      : {new_pos:.2f}")
+            print(f"preday close      : {last_day_memory.close:.2f}")
+            print(f"current day close : {self.data.close:.2f}")
+            print(f"day close rate    : {day_close_rate:.2f}%")
+            print(f"amount value      : {self.portfolio_value:.2f}")
+            print(f"today return      : {portfolio_return:.2f}%")
             new_portfolio_value = self.portfolio_value * (1 + portfolio_return)
             self.portfolio_value = new_portfolio_value
-            print("new amount        : ", new_portfolio_value)
+            print(f"new amount        : {new_portfolio_value:.2f}")
             
 
             # save into memory
