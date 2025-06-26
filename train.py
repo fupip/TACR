@@ -249,15 +249,25 @@ def main(variant):
             print(f"load model failed: {e}, train from scratch")
     
     warmup_steps = variant['warmup_steps']
+    total_steps = variant['max_iters'] * variant['num_steps_per_iter']  # 总训练步数
+    
     optimizer = torch.optim.AdamW(
         model.parameters(),
         lr=variant['learning_rate'],
         weight_decay=variant['weight_decay'],
     )
-    scheduler = torch.optim.lr_scheduler.LambdaLR(
-        optimizer,
-        lambda steps: min((steps + 1) / warmup_steps, 1)
-    )
+    
+    # 改进的学习率调度：warmup + cosine decay
+    def lr_lambda(step):
+        if step < warmup_steps:
+            # Warmup 阶段：线性增长
+            return (step + 1) / warmup_steps
+        else:
+            # Warmup 后：余弦衰减
+            progress = (step - warmup_steps) / (total_steps - warmup_steps)
+            return 0.5 * (1.0 + np.cos(np.pi * progress))
+    
+    scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda)
 
     trainer = SequenceTrainer(
         model=model,
