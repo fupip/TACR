@@ -47,7 +47,7 @@ class Trainer:
         self.mode = mode
 
         self.start_time = time.time()
-        print("model trainmode: ", self.mode)
+        print("model train mode: ", self.mode)
 
     def train_iteration(self, num_steps, iter_num=0, print_logs=False):
 
@@ -87,7 +87,7 @@ class Trainer:
             print('=' * 80)
             print(f'Iteration {iter_num}')
             for k, v in logs.items():
-                print(f'{k}: {v}')
+                print(f'{k} \t: {v}')
 
         return logs
 
