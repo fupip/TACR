@@ -188,14 +188,17 @@ class StockPortfolioEnv(gym.Env):
             # print("actions",actions.tolist())
             # weights = actions
             
+            old_pos = np.argmax(self.actions_memory[-1]) - 1.0
+            print("--------------------------------------------")
+            print("old position      : ", old_pos)
             
             self.actions_memory.append(actions)
-            weights = np.argmax(actions) - 1.0
-            print("weights: ", weights)
+            new_pos = np.argmax(actions) - 1.0
+            print("new position      : ", new_pos)
 
-            if self.turbulence_threshold is not None:
-                if self.turbulence >= self.turbulence_threshold:
-                    weights = np.zeros(len(weights), dtype=float)
+            # if self.turbulence_threshold is not None:
+            #     if self.turbulence >= self.turbulence_threshold:
+            #         weights = np.zeros(len(weights), dtype=float)
             
             # 检查权重变化是否超过阈值，如果没有超过则保持原有仓位
             # prev_weights = self.actions_memory[-1]
@@ -239,11 +242,9 @@ class StockPortfolioEnv(gym.Env):
             # Equation (19) : Portfolio value
             
             # print("action_memory[-2]: ", self.actions_memory[-2])
-            old_weights = np.argmax(self.actions_memory[-2]) - 1.0
-            print(" ---------------------------------------")
-            print("old position      : ", old_weights)
-            if weights > 0:
-                portfolio_return = ((self.data.close / last_day_memory.close) - 1) * weights - self.transaction_cost * abs(weights - old_weights)
+            
+            if new_pos > 0:
+                portfolio_return = ((self.data.close / last_day_memory.close) - 1) * new_pos - self.transaction_cost * abs(new_pos - old_pos)
             else:
                 portfolio_return = 0.0
             # print("portfolio_return  : ", portfolio_return)
@@ -265,7 +266,7 @@ class StockPortfolioEnv(gym.Env):
             self.asset_memory.append(new_portfolio_value)
 
             # Equation (1), (2) : individual stocks' return * weight
-            self.reward = ((self.data.close / last_day_memory.close) - 1) * weights
+            self.reward = ((self.data.close / last_day_memory.close) - 1) * new_pos
 
         return self.state, self.reward, self.terminal, {}
 
