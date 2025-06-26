@@ -12,17 +12,18 @@ from tac.training.seq_trainer import SequenceTrainer
 import torch.backends.cudnn as cudnn
 
 def main(variant):
+    mode = variant.get('mode', 'tacr')
     device = variant.get('device', 'cuda')
     log_to_wandb = variant.get('log_to_wandb', False)
 
     env_name, dataset = variant['env'], variant['dataset']
-    group_name = f'{env_name}-{dataset}'
+    group_name = f'{env_name}-{dataset}-{mode}'
     exp_prefix = f'{group_name}-{random.randint(int(1e5), int(1e6) - 1)}'
 
     train = pd.read_csv("datasets/"+dataset+"_train.csv", index_col=[0])
     max_ep_len = train.index[-1]
     
-    mode = variant.get('mode', 'tacr')
+    
 
     # Load suboptimal trajectories
     dataset_path = f'{"trajectory/" + variant["dataset"] + "_traj.pkl"}'
@@ -294,7 +295,7 @@ if __name__ == '__main__':
     parser.add_argument('--weight_decay', '-wd', type=float, default=1e-4)
     parser.add_argument('--warmup_steps', type=int, default=10000)
     parser.add_argument('--max_iters', type=int, default=10)
-    parser.add_argument('--num_steps_per_iter', type=int, default=5000)
+    parser.add_argument('--num_steps_per_iter', type=int, default=1000)
     parser.add_argument('--device', type=str, default='cuda')
     parser.add_argument('--log_to_wandb', '-w', type=bool, default=False)
     parser.add_argument('--mode', type=str, default='tacr')

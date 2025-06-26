@@ -31,7 +31,7 @@ class SequenceTrainer(Trainer):
         # Algorithm 1, line9, line10
         # Compute the target Q value
         target_Q = self.critic_target(next_state, next_Q_action_preds)
-        target_Q = rewards + (dones * self.discount * target_Q).detach()
+        target_Q = rewards + ((1 - dones) * self.discount * target_Q).detach()
         # Get current Q estimates
         current_Q = self.critic(states, action_sample)
         # Compute critic loss
@@ -45,7 +45,7 @@ class SequenceTrainer(Trainer):
         # Algorithm 1, line11, line12 : Set lambda and Compute actor loss
         pi = Q_action_preds
         Q = self.critic(states, pi)
-        lmbda = self.alpha / Q.abs().mean().detach()
+        lmbda = self.alpha / (Q.abs().mean().detach() + 1e-6)
         actor_loss = -lmbda * Q.mean() + F.mse_loss(pi, action_sample)
 
         # Optimize the actor
@@ -64,8 +64,8 @@ class SequenceTrainer(Trainer):
 
         for param, target_param in zip(self.actor.parameters(), self.actor_target.parameters()):
             target_param.data.copy_(self.tau * param.data + (1 - self.tau) * target_param.data)
-
-        return actor_loss.detach().cpu().item()
+        # 返回 q_loss,policy_loss,value_loss(None)
+        return critic_loss.detach().cpu().item(),actor_loss.detach().cpu().item(),None
 
 
     # CQL 的方法
@@ -167,7 +167,7 @@ class SequenceTrainer(Trainer):
         for param, target_param in zip(self.actor.parameters(), self.actor_target.parameters()):
             target_param.data.copy_(self.tau * param.data + (1 - self.tau) * target_param.data)
 
-        return actor_loss.detach().cpu().item()
+        return critic_loss.detach().cpu().item(),actor_loss.detach().cpu().item(),None
     
     # IQL 的方法
     def train_step_iql(self,step):
@@ -266,5 +266,5 @@ class SequenceTrainer(Trainer):
             self.scheduler.step()
 
 
-        return actor_loss.detach().cpu().item()
+        return q_loss.detach().cpu().item(),   actor_loss.detach().cpu().item(),v_loss.detach().cpu().item()
 

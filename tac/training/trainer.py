@@ -51,7 +51,10 @@ class Trainer:
 
     def train_iteration(self, num_steps, iter_num=0, print_logs=False):
 
-        train_losses = []
+        q_losses = []
+        policy_losses = []
+        value_losses = []
+        
         logs = dict()
 
         train_start = time.time()
@@ -61,17 +64,21 @@ class Trainer:
         for _ in tqdm(range(num_steps), desc="train progress"):
             self.total_it += 1
             if self.mode == 'tacr':
-                train_loss = self.train_step(self.total_it)
+                q_loss,policy_loss,value_loss = self.train_step(self.total_it)
             elif self.mode == 'cql':
-                train_loss = self.train_step_cql(self.total_it)
+                q_loss,policy_loss,value_loss = self.train_step_cql(self.total_it)
             elif self.mode == 'iql':
-                train_loss = self.train_step_iql(self.total_it)
-            train_losses.append(train_loss)
+                q_loss,policy_loss,value_loss = self.train_step_iql(self.total_it)
+            q_losses.append(q_loss)
+            policy_losses.append(policy_loss)
+            value_losses.append(value_loss)
 
-        logs['time/training'] = time.time() - train_start
-        logs['time/total'] = time.time() - self.start_time
-        logs['training/train_loss_mean'] = np.mean(train_losses)
-        logs['training/train_loss_std'] = np.std(train_losses)
+        # logs['time/training'] = time.time() - train_start
+        logs['total_time'] = time.time() - self.start_time
+        logs['q_loss'] = np.mean(q_losses)
+        logs['policy_loss'] = np.mean(policy_losses)
+        logs['value_loss'] = np.mean(value_losses)
+        # logs['training/train_loss_std'] = np.std(train_losses)
 
         for k in self.diagnostics:
             logs[k] = self.diagnostics[k]
