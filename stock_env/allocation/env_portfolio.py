@@ -245,6 +245,9 @@ class StockPortfolioEnv(gym.Env):
             print("portfolio_return: ", portfolio_return)
 
             # update portfolio value
+            print("trade date: ", self.data.date)
+            print("pre day close: ", last_day_memory.close)
+            print("current day close: ", self.data.close)
             print("portfolio_value: ", self.portfolio_value)
             print("portfolio_return: ", portfolio_return)
             new_portfolio_value = self.portfolio_value * (1 + portfolio_return)

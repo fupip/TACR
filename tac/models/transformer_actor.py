@@ -242,10 +242,10 @@ class TransformerActor(TrajectoryModel):
         # print("alpha mean",alpha.mean().item(),"min",alpha.min().item(),"max",alpha.max().item())
 
         result = action_preds[0,-1]
-        print("result: ", result)
+        # print("result: ", result)
         
         argmax = torch.argmax(action_preds, dim=-1)
-        print("argmax: ", argmax)
+        # print("argmax: ", argmax)
 
         
         return result
