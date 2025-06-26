@@ -73,7 +73,7 @@ class Trainer:
             policy_losses.append(policy_loss)
             value_losses.append(value_loss if value_loss is not None else 0)
 
-        # logs['time/training'] = time.time() - train_start
+        logs['iter_time'] = time.time() - train_start
         logs['total_time'] = time.time() - self.start_time
         logs['q_loss'] = np.mean(q_losses)
         logs['policy_loss'] = np.mean(policy_losses)
@@ -87,7 +87,7 @@ class Trainer:
             print('=' * 80)
             print(f'Iteration {iter_num}')
             for k, v in logs.items():
-                print(f'{k:15s} \t: {v}')
+                print(f'{k:15s}: {v}')
 
         return logs
 
