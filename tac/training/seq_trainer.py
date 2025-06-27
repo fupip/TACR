@@ -95,11 +95,15 @@ class SequenceTrainer(Trainer):
         next_action_preds = next_action_preds.reshape(-1, self.action_dim)[attention_mask.reshape(-1) > 0]
         dones = dones.reshape(-1, 1)[attention_mask.reshape(-1) > 0]
         
+        # next_action_preds 转化为one-hot
+        next_action_argmax = next_action_preds.argmax(dim=1)
+        next_action_one_hot = torch.eye(num_actions).to(next_action_preds.device)[next_action_argmax]
+        
         # print("dones",dones)
 
         # Algorithm 1, line9, line10
         # Compute the target Q value
-        target_Q = self.critic_target(next_state, next_action_preds)
+        target_Q = self.critic_target(next_state, next_action_one_hot)
         
         
         target_Q = rewards + ((1 - dones) * self.discount * target_Q).detach()
@@ -119,33 +123,24 @@ class SequenceTrainer(Trainer):
         # random_q = self.critic(repeated_states, random_actions)
         # random_q = random_q.reshape(batch_size, num_random, 1)
         
-        
-        # 离散动作空间总数
+        # 离散动作使用全部空间
         num_actions = 3
-        one_hot_actions = torch.eye(num_actions).to(states.device)  # shape=(3,3)
-
-        # 对每个state，复制这3个动作
-        batch_size = states.shape[0]
+        all_actions = torch.eye(num_actions).to(states.device)
         repeated_states = states.unsqueeze(1).repeat(1, num_actions, 1).reshape(batch_size * num_actions, -1)
-        repeated_actions = one_hot_actions.unsqueeze(0).repeat(batch_size, 1, 1).reshape(batch_size * num_actions, -1)
-
-        # 送入critic
-        random_q = self.critic(repeated_states, repeated_actions)
-        random_q = random_q.reshape(batch_size, num_actions, 1)
+        repeated_actions = all_actions.unsqueeze(0).repeat(batch_size, 1, 1).reshape(batch_size * num_actions, -1)
+        all_q = self.critic(repeated_states, repeated_actions).reshape(batch_size, num_actions)
+        logsumexp_q = torch.logsumexp(all_q, dim=1, keepdim=True)
+        cql_regularizer = (logsumexp_q - current_Q).mean()
 
         
         data_q = current_Q.unsqueeze(1)
         
-        Q = self.critic(states, action_preds.detach())
+        # action_preds 转化为one-hot
+        action_argmax = action_preds.argmax(dim=1)
+        action_one_hot = torch.eye(num_actions).to(action_preds.device)[action_argmax]
+        
+        Q = self.critic(states, action_one_hot)
         policy_q = Q.unsqueeze(1)
-        
-        # log-sum-exp 计算
-        cat_q = torch.cat([random_q, policy_q], dim=1)
-        logsumexp_q = torch.logsumexp(cat_q, dim=1, keepdim=True)
-        
-        # CQL 正则项 = alpha * (logsumexp_q - q_data)
-        cql_regularizer = (logsumexp_q - current_Q).mean()
-        # cql_alpha = 2.0  # 使用已有的 alpha 参数
         
         # 最终的 critic 损失 = 标准 TD 误差 + CQL 正则项
         critic_loss = F.mse_loss(current_Q, target_Q) + self.alpha * cql_regularizer
