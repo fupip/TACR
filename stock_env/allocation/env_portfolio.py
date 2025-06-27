@@ -270,7 +270,7 @@ class StockPortfolioEnv(gym.Env):
             self.asset_memory.append(new_portfolio_value)
 
             # Equation (1), (2) : individual stocks' return * weight
-            self.reward = ((self.data.close / last_day_memory.close) - 1) * new_pos
+            self.reward = portfolio_return
 
         return self.state, self.reward, self.terminal, {}
 
