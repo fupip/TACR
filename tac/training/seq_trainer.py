@@ -178,7 +178,8 @@ class SequenceTrainer(Trainer):
         
         # 离散动作使用交叉熵损失
         bc_loss = F.cross_entropy(action_preds, action_sample.argmax(dim=-1))
-        self.alpha = 0.0
+        # self.alpha = 0.0
+
         actor_loss = -self.alpha * new_Q.mean() + bc_loss
 
         # Optimize the actor 训练主网络
