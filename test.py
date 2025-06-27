@@ -103,7 +103,7 @@ def experiment(variant):
 
     if test_strategy == 'model':
         # 测试模型
-        print("测试 TACR 模型...")
+        print(f"test {mode} model...")
         
         states = []
         for path in trajectories:
@@ -141,11 +141,11 @@ def experiment(variant):
             device=device
         )
         
-        print(f"TACR 模型回报: {episode_return:.4f}, 交易天数: {episode_length}")
+        print(f"{mode } model return: {episode_return:.4f}, trade days: {episode_length}")
         
     elif test_strategy == 'ma':
         # 测试均线策略
-        print("测试均线策略...")
+        print("test ma strategy...")
         
         ma_strategy = MovingAverageStrategy(
             strategy_id=variant.get('ma_strategy_id', 1),
@@ -159,11 +159,11 @@ def experiment(variant):
             state_dim=state_dim
         )
         
-        print(f"均线策略回报: {episode_return:.4f}, 交易天数: {episode_length}")
+        print(f"MA strategy return: {episode_return:.4f}, trade days: {episode_length}")
         
     elif test_strategy == 'random':
         # 测试随机策略
-        print("测试随机策略...")
+        print("test random strategy...")
         
         random_strategy = RandomStrategy(strategy_id=0)
         
@@ -174,10 +174,10 @@ def experiment(variant):
             state_dim=state_dim
         )
         
-        print(f"随机策略回报: {episode_return:.4f}, 交易天数: {episode_length}")
+        print(f"random strategy return: {episode_return:.4f}, trade days: {episode_length}")
     
     else:
-        raise ValueError(f"不支持的测试策略: {test_strategy}")
+        raise ValueError(f"unsupported test strategy: {test_strategy}")
 
     return episode_return, episode_length
 
@@ -199,13 +199,13 @@ if __name__ == '__main__':
     # 新增：测试策略选择
     parser.add_argument('--test_strategy', type=str, default='model', 
                        choices=['model', 'ma', 'random'],
-                       help='选择测试策略: model(TACR模型), ma(均线策略), random(随机策略)')
+                       help='test strategy: model(TACR model), ma(ma strategy), random(random strategy)')
     
     # 均线策略参数
     parser.add_argument('--ma_strategy_id', type=int, default=1,
-                       help='均线策略强度参数')
+                       help='ma strategy id')
     parser.add_argument('--ma_threshold', type=float, default=0.2,
-                       help='均线策略阈值倍数')
+                       help='ma strategy threshold')
 
     args = parser.parse_args()
     experiment(variant=vars(args))
