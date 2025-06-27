@@ -7,6 +7,7 @@ class SequenceTrainer(Trainer):
     
     # 原始TACR的训练方法
     def train_step(self,step):
+        action_dim = 3
         # Algorithm 1, line6 : Sample a random minibatch
         states, actions, rewards, dones, next_state, next_actions, next_rewards, \
         timesteps, next_timesteps, attention_mask = self.get_batch(self.batch_size)
@@ -27,11 +28,17 @@ class SequenceTrainer(Trainer):
         action_preds = action_preds.reshape(-1, self.action_dim)[attention_mask.reshape(-1) > 0]
         next_action_preds = next_action_preds.reshape(-1, self.action_dim)[attention_mask.reshape(-1) > 0]
         dones = dones.reshape(-1, 1)[attention_mask.reshape(-1) > 0]
+        
+        # next_action_preds 转化为one-hot
+        next_action_argmax = next_action_preds.argmax(dim=1)
+        next_action_one_hot = torch.eye(action_dim).to(next_action_preds.device)[next_action_argmax]
 
         # Algorithm 1, line9, line10
         # Compute the target Q value
-        target_Q = self.critic_target(next_state, next_action_preds)
-        target_Q = rewards + ((1 - dones) * self.discount * target_Q).detach()
+        target_Q = self.critic_target(next_state, next_action_one_hot)
+        target_Q = rewards + (1 - dones) * self.discount * target_Q
+        target_Q = target_Q.detach()
+        
         # Get current Q estimates
         current_Q = self.critic(states, action_sample)
         # Compute critic loss
@@ -42,11 +49,15 @@ class SequenceTrainer(Trainer):
         critic_loss.backward()
         self.critic_optimizer.step()
 
+        action_argmax = action_preds.argmax(dim=1)
+        action_one_hot = torch.eye(action_dim).to(action_preds.device)[action_argmax]
         # Algorithm 1, line11, line12 : Set lambda and Compute actor loss
-        pi = action_preds
-        Q = self.critic(states, pi)
+        Q = self.critic(states, action_one_hot)
         lmbda = self.alpha / (Q.abs().mean().detach() + 1e-6)
-        actor_loss = -lmbda * Q.mean() + F.mse_loss(pi, action_sample)
+        bc_loss = F.cross_entropy(action_preds, action_sample.argmax(dim=-1))
+        actor_loss = -lmbda * Q.mean() + bc_loss
+        
+        
 
         # Optimize the actor
         self.optimizer.zero_grad()
@@ -65,7 +76,12 @@ class SequenceTrainer(Trainer):
         for param, target_param in zip(self.actor.parameters(), self.actor_target.parameters()):
             target_param.data.copy_(self.tau * param.data + (1 - self.tau) * target_param.data)
         # 返回 q_loss,policy_loss,value_loss(None)
-        return critic_loss.detach().cpu().item(),actor_loss.detach().cpu().item(),None
+        return (critic_loss.detach().cpu().item(),
+                actor_loss.detach().cpu().item(),
+                Q.mean().detach().cpu().item(),
+                bc_loss.detach().cpu().item(),
+                None # value_loss
+                )
 
 
     # CQL 的方法
@@ -181,7 +197,11 @@ class SequenceTrainer(Trainer):
         for param, target_param in zip(self.actor.parameters(), self.actor_target.parameters()):
             target_param.data.copy_(self.tau * param.data + (1 - self.tau) * target_param.data)
 
-        return critic_loss.detach().cpu().item(),actor_loss.detach().cpu().item(),None
+        return (critic_loss.detach().cpu().item(),
+                actor_loss.detach().cpu().item(),
+                new_Q.mean().detach().cpu().item(),
+                bc_loss.detach().cpu().item(),
+                None)
     
     # IQL 的方法
     def train_step_iql(self,step):
@@ -280,5 +300,10 @@ class SequenceTrainer(Trainer):
             self.scheduler.step()
 
 
-        return q_loss.detach().cpu().item(),   actor_loss.detach().cpu().item(),v_loss.detach().cpu().item()
+        return (q_loss.detach().cpu().item(),
+                actor_loss.detach().cpu().item(),
+                new_Q.mean().detach().cpu().item(),
+                exp_adv.mean().detach().cpu().item(),
+                v_loss.detach().cpu().item()
+                )
 

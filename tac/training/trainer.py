@@ -61,14 +61,15 @@ class Trainer:
 
         self.actor.train()  # 设置模型为训练模式
         print("num_steps",num_steps)
+        adv_mean = None
         for _ in tqdm(range(num_steps), desc="train progress"):
             self.total_it += 1
             if self.mode == 'tacr':
-                q_loss,policy_loss,value_loss = self.train_step(self.total_it)
+                q_loss,policy_loss,q_mean,bc_loss,value_loss = self.train_step(self.total_it)
             elif self.mode == 'cql':
-                q_loss,policy_loss,value_loss = self.train_step_cql(self.total_it)
+                q_loss,policy_loss,q_mean,bc_loss,value_loss = self.train_step_cql(self.total_it)
             elif self.mode == 'iql':
-                q_loss,policy_loss,value_loss = self.train_step_iql(self.total_it)
+                q_loss,policy_loss,q_mean,adv_mean,value_loss = self.train_step_iql(self.total_it)
             q_losses.append(q_loss)
             policy_losses.append(policy_loss)
             value_losses.append(value_loss if value_loss is not None else 0)
@@ -77,7 +78,14 @@ class Trainer:
         logs['total_time'] = time.time() - self.start_time
         logs['q_loss'] = np.mean(q_losses)
         logs['policy_loss'] = np.mean(policy_losses)
-        logs['value_loss'] = np.mean(value_losses)
+        if q_mean is not None:
+            logs['q_mean'] = np.mean(q_mean)
+        if bc_loss is not None:
+            logs['bc_loss'] = np.mean(bc_loss)
+        if adv_mean is not None:
+            logs['adv_mean'] = np.mean(adv_mean)
+        if value_loss is not None:
+            logs['value_loss'] = np.mean(value_losses)
         # logs['training/train_loss_std'] = np.std(train_losses)
 
         for k in self.diagnostics:
