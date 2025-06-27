@@ -174,11 +174,11 @@ class SequenceTrainer(Trainer):
         # Algorithm 1, line11, line12 : 计算 actor loss
         # 在 CQL 方法中，我们仍然使用类似的 actor 更新
         
-        lmbda = self.alpha / new_Q.abs().mean().detach()
+        # lmbda = self.alpha / new_Q.abs().mean().detach()
         
         # 离散动作使用交叉熵损失
         bc_loss = F.cross_entropy(action_preds, action_sample.argmax(dim=-1))
-        actor_loss = -lmbda * new_Q.mean() + bc_loss
+        actor_loss = -self.alpha * new_Q.mean() + bc_loss
 
         # Optimize the actor 训练主网络
         self.optimizer.zero_grad()
