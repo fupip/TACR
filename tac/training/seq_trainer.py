@@ -24,13 +24,13 @@ class SequenceTrainer(Trainer):
         next_state = next_state.reshape(-1, self.state_dim)[attention_mask.reshape(-1) > 0]
         rewards = rewards.reshape(-1, 1)[attention_mask.reshape(-1) > 0]
         action_sample = actions.reshape(-1, self.action_dim)[attention_mask.reshape(-1) > 0]
-        Q_action_preds = action_preds.reshape(-1, self.action_dim)[attention_mask.reshape(-1) > 0]
-        next_Q_action_preds = next_action_preds.reshape(-1, self.action_dim)[attention_mask.reshape(-1) > 0]
+        action_preds = action_preds.reshape(-1, self.action_dim)[attention_mask.reshape(-1) > 0]
+        next_action_preds = next_action_preds.reshape(-1, self.action_dim)[attention_mask.reshape(-1) > 0]
         dones = dones.reshape(-1, 1)[attention_mask.reshape(-1) > 0]
 
         # Algorithm 1, line9, line10
         # Compute the target Q value
-        target_Q = self.critic_target(next_state, next_Q_action_preds)
+        target_Q = self.critic_target(next_state, next_action_preds)
         target_Q = rewards + ((1 - dones) * self.discount * target_Q).detach()
         # Get current Q estimates
         current_Q = self.critic(states, action_sample)
@@ -43,7 +43,7 @@ class SequenceTrainer(Trainer):
         self.critic_optimizer.step()
 
         # Algorithm 1, line11, line12 : Set lambda and Compute actor loss
-        pi = Q_action_preds
+        pi = action_preds
         Q = self.critic(states, pi)
         lmbda = self.alpha / (Q.abs().mean().detach() + 1e-6)
         actor_loss = -lmbda * Q.mean() + F.mse_loss(pi, action_sample)
@@ -113,11 +113,26 @@ class SequenceTrainer(Trainer):
         # 计算 CQL 正则项
         batch_size = states.shape[0]
         
-        num_random = 10  # 随机动作的倍数
-        random_actions = torch.FloatTensor(batch_size * num_random, self.action_dim).uniform_(-1, 1).to(states.device)
-        repeated_states = states.unsqueeze(1).repeat(1, num_random, 1).reshape(batch_size * num_random, -1)
-        random_q = self.critic(repeated_states, random_actions)
-        random_q = random_q.reshape(batch_size, num_random, 1)
+        # num_random = 10  # 随机动作的倍数
+        # random_actions = torch.FloatTensor(batch_size * num_random, self.action_dim).uniform_(-1, 1).to(states.device)
+        # repeated_states = states.unsqueeze(1).repeat(1, num_random, 1).reshape(batch_size * num_random, -1)
+        # random_q = self.critic(repeated_states, random_actions)
+        # random_q = random_q.reshape(batch_size, num_random, 1)
+        
+        
+        # 离散动作空间总数
+        num_actions = 3
+        one_hot_actions = torch.eye(num_actions).to(states.device)  # shape=(3,3)
+
+        # 对每个state，复制这3个动作
+        batch_size = states.shape[0]
+        repeated_states = states.unsqueeze(1).repeat(1, num_actions, 1).reshape(batch_size * num_actions, -1)
+        repeated_actions = one_hot_actions.unsqueeze(0).repeat(batch_size, 1, 1).reshape(batch_size * num_actions, -1)
+
+        # 送入critic
+        random_q = self.critic(repeated_states, repeated_actions)
+        random_q = random_q.reshape(batch_size, num_actions, 1)
+
         
         data_q = current_Q.unsqueeze(1)
         
