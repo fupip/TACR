@@ -104,9 +104,9 @@ class SequenceTrainer(Trainer):
         # Algorithm 1, line9, line10
         # Compute the target Q value
         target_Q = self.critic_target(next_state, next_action_one_hot)
-        
-        
-        target_Q = rewards + ((1 - dones) * self.discount * target_Q).detach()
+        target_Q = rewards + (1 - dones) * self.discount * target_Q
+        target_Q = target_Q.detach()
+
         # Get current Q estimates
         current_Q = self.critic(states, action_sample)
         
@@ -133,14 +133,14 @@ class SequenceTrainer(Trainer):
         cql_regularizer = (logsumexp_q - current_Q).mean()
 
         
-        data_q = current_Q.unsqueeze(1)
+        # data_q = current_Q.unsqueeze(1)
         
         # action_preds 转化为one-hot
         action_argmax = action_preds.argmax(dim=1)
         action_one_hot = torch.eye(num_actions).to(action_preds.device)[action_argmax]
         
         Q = self.critic(states, action_one_hot)
-        policy_q = Q.unsqueeze(1)
+        # policy_q = Q.unsqueeze(1)
         
         # 最终的 critic 损失 = 标准 TD 误差 + CQL 正则项
         critic_loss = F.mse_loss(current_Q, target_Q) + self.alpha * cql_regularizer
