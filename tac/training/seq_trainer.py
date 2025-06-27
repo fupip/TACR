@@ -70,6 +70,8 @@ class SequenceTrainer(Trainer):
 
     # CQL 的方法
     def train_step_cql(self,step):
+        
+        num_actions = 3
         # Algorithm 1, line6 : Sample a random minibatch
         states, actions, rewards, dones, next_state, next_actions, next_rewards, \
         timesteps, next_timesteps, attention_mask = self.get_batch(self.batch_size)
@@ -124,7 +126,7 @@ class SequenceTrainer(Trainer):
         # random_q = random_q.reshape(batch_size, num_random, 1)
         
         # 离散动作使用全部空间
-        num_actions = 3
+        
         all_actions = torch.eye(num_actions).to(states.device)
         repeated_states = states.unsqueeze(1).repeat(1, num_actions, 1).reshape(batch_size * num_actions, -1)
         repeated_actions = all_actions.unsqueeze(0).repeat(batch_size, 1, 1).reshape(batch_size * num_actions, -1)
