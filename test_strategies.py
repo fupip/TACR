@@ -86,7 +86,7 @@ def experiment_comparison(variant):
     env_kwargs = {
         "dataset": dataset,
         "initial_amount": 1000000,
-        "transaction_cost": 0.0000,
+        "transaction_cost": 0.002,
         "state_space": state_space,
         "stock_dim": stock_dimension,
         "tech_indicator_list": config.TECHNICAL_INDICATORS_LIST,
