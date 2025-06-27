@@ -151,13 +151,15 @@ class SequenceTrainer(Trainer):
         self.critic_optimizer.step()
         
         # 当前预测动作的Q值
-        new_Q = self.critic(states, action_preds)
+        new_Q = self.critic(states, action_one_hot)
 
         # Algorithm 1, line11, line12 : 计算 actor loss
         # 在 CQL 方法中，我们仍然使用类似的 actor 更新
         
         lmbda = self.alpha / new_Q.abs().mean().detach()
-        bc_loss = F.mse_loss(action_preds, action_sample)
+        
+        # 离散动作使用交叉熵损失
+        bc_loss = F.cross_entropy(action_preds, action_sample.argmax(dim=-1))
         actor_loss = -lmbda * new_Q.mean() + bc_loss
 
         # Optimize the actor 训练主网络
