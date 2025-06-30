@@ -130,16 +130,20 @@ def create_data(variant):
         rews = np.array(rews)
         term = np.array(term)
         acs = np.array(acs)
-        print("rewards",np.sum(rews))
+        
+        # 使用复合增长计算总收益：new_value = initial_value * (1 + reward)
+        initial_value = 1.0  # 初始投资额度（可以设置为其他值）
+        total_PnL = initial_value * np.prod(1 + rews)
+        print("rewards sum:", np.sum(rews))
+        print("compound return:", total_PnL - initial_value)
         traj = {"observations": obs, "rewards": rews, "dones": term, "actions": acs}
         
         return traj
 
     paths = []
 
-    for i in range(5):
-        traj = traj_generator(env, i)
-        paths.append(traj)
+    traj = traj_generator(env, i)
+    paths.append(traj)
 
     if not os.path.exists("trajectory"):
         os.makedirs("trajectory")
