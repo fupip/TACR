@@ -40,10 +40,10 @@ class MovingAverageStrategy(BaseStrategy):
         line_type = ma_fs[0]
         fast_ma = ma_fs[1]
         fast_ma_value = data[f'close_{fast_ma}_sma']
-        if ma_count == 2:
+        if ma_count == 3:
             slow_ma = ma_fs[2]
             slow_ma_value = data[f'close_{slow_ma}_sma']
-        elif ma_count == 3:
+        elif ma_count == 4:
             slow_ma = ma_fs[2]
             limit_ma = ma_fs[3]
             limit_ma_value = data[f'close_{limit_ma}_sma']
