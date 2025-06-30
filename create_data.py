@@ -149,7 +149,9 @@ def create_data(variant):
     paths = []
     for i in range(12):
         traj,total_reward = traj_generator(env, i)
-        paths.append(traj)
+        if total_reward > 0.15:
+            print("total_reward",total_reward)
+            paths.append(traj)
 
     if not os.path.exists("trajectory"):
         os.makedirs("trajectory")
