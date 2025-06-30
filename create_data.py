@@ -134,17 +134,24 @@ def create_data(variant):
         # 使用复合增长计算总收益：new_value = initial_value * (1 + reward)
         initial_value = 1000000  # 初始投资额度（可以设置为其他值）
         total_amount = initial_value * np.prod(1 + rews)
+        total_reward = (total_amount - initial_value)/initial_value
         print("rewards sum:", np.sum(rews))
         print("total_PnL:", total_amount - initial_value)
         print("total_amount",total_amount)
+        
+        print("total_reward",total_reward)
         traj = {"observations": obs, "rewards": rews, "dones": term, "actions": acs}
         
-        return traj
+        return traj,total_reward
 
+    env = trajectory(df=train, dataset=variant['dataset'], **env_kwargs)
+    
     paths = []
-    i = 0 
-    traj = traj_generator(env, i)
-    paths.append(traj)
+    for i in range(12):
+        traj,total_reward = traj_generator(env, i)
+        
+        paths.append(traj)
+        total_rewards.append(total_reward)
 
     if not os.path.exists("trajectory"):
         os.makedirs("trajectory")

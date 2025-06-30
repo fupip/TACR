@@ -15,7 +15,8 @@ TECHNICAL_INDICATORS_LIST = [
     "boll_lb",
     "close_5_sma",
     "close_20_sma",
-    "close_60_sma"
+    "close_60_sma",
+    "close_120_sma"
 ]
 
 ########################################################
