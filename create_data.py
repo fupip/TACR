@@ -132,10 +132,11 @@ def create_data(variant):
         acs = np.array(acs)
         
         # 使用复合增长计算总收益：new_value = initial_value * (1 + reward)
-        initial_value = 1.0  # 初始投资额度（可以设置为其他值）
-        total_PnL = initial_value * np.prod(1 + rews)
+        initial_value = 1000000  # 初始投资额度（可以设置为其他值）
+        total_amount = initial_value * np.prod(1 + rews)
         print("rewards sum:", np.sum(rews))
-        print("compound return:", total_PnL - initial_value)
+        print("total_PnL:", total_amount - initial_value)
+        print("total_amount",total_amount)
         traj = {"observations": obs, "rewards": rews, "dones": term, "actions": acs}
         
         return traj
