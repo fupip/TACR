@@ -63,10 +63,10 @@ class MovingAverageStrategy(BaseStrategy):
         
         if line_type == "1":
             
-            if current_close > fast_ma_data:
+            if current_close > fast_ma_value:
                 position = 1.0
                 action = np.array([0.0, 0.0, 1.0])  # Buy
-            elif current_close < fast_ma_data:
+            elif current_close < fast_ma_value:
                 position = -1.0
                 action = np.array([1.0, 0.0, 0.0])  # Sell
             else:
