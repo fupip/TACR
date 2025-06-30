@@ -153,6 +153,7 @@ def create_data(variant):
             print(f"[{i}] total_reward: {total_reward}")
             paths.append(traj)
 
+    print(f"total paths: {len(paths)}")
     if not os.path.exists("trajectory"):
         os.makedirs("trajectory")
 
