@@ -36,6 +36,7 @@ class MovingAverageStrategy(BaseStrategy):
         """
         ma_fs = self.ma_type.split("_")
         ma_count = len(ma_fs)
+        print(self.ma_type)
         
         line_type = ma_fs[0]
         fast_ma = ma_fs[1]
@@ -45,6 +46,7 @@ class MovingAverageStrategy(BaseStrategy):
             slow_ma_value = data[f'close_{slow_ma}_sma']
         elif ma_count == 4:
             slow_ma = ma_fs[2]
+            slow_ma_value = data[f'close_{slow_ma}_sma']
             limit_ma = ma_fs[3]
             limit_ma_value = data[f'close_{limit_ma}_sma']
         
