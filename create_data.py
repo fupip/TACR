@@ -141,7 +141,7 @@ def create_data(variant):
         return traj
 
     paths = []
-
+    i = 0 
     traj = traj_generator(env, i)
     paths.append(traj)
 
