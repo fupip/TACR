@@ -116,8 +116,6 @@ class SequenceTrainer(Trainer):
         # next_action_preds 转化为one-hot
         next_action_argmax = next_action_preds.argmax(dim=1)
         next_action_one_hot = torch.eye(num_actions).to(next_action_preds.device)[next_action_argmax]
-        
-        # print("dones",dones)
 
         # Algorithm 1, line9, line10
         # Compute the target Q value
@@ -128,40 +126,32 @@ class SequenceTrainer(Trainer):
         # Get current Q estimates
         current_Q = self.critic(states, action_sample)
         
-        
-        
-        # CQL 正则项：最小化随机采样动作的 Q 值，同时最大化数据集中动作的 Q 值
-        # 使用 CQL(H) 变体，通过 log-sum-exp 实现
-        # 计算 CQL 正则项
+        # CQL 正则项：渐进式训练策略
         batch_size = states.shape[0]
         
-        # num_random = 10  # 随机动作的倍数
-        # random_actions = torch.FloatTensor(batch_size * num_random, self.action_dim).uniform_(-1, 1).to(states.device)
-        # repeated_states = states.unsqueeze(1).repeat(1, num_random, 1).reshape(batch_size * num_random, -1)
-        # random_q = self.critic(repeated_states, random_actions)
-        # random_q = random_q.reshape(batch_size, num_random, 1)
+        # 渐进式CQL权重：训练早期权重较小，逐步增加
+        # cql_alpha 最大值调为 0.2~0.5 试试效果
+        max_cql_steps = 50000  # 5万步后达到最大CQL权重
+        cql_alpha = min(0.1 * (step / max_cql_steps), 0.1)  # 最大权重0.1而不是0.9
         
-        # 离散动作使用全部空间
-        
+        # 计算CQL正则化项
         all_actions = torch.eye(num_actions).to(states.device)
         repeated_states = states.unsqueeze(1).repeat(1, num_actions, 1).reshape(batch_size * num_actions, -1)
         repeated_actions = all_actions.unsqueeze(0).repeat(batch_size, 1, 1).reshape(batch_size * num_actions, -1)
         all_q = self.critic(repeated_states, repeated_actions).reshape(batch_size, num_actions)
+        
+        # 改进的CQL正则化：只惩罚非数据动作
         logsumexp_q = torch.logsumexp(all_q, dim=1, keepdim=True)
-        cql_regularizer = (logsumexp_q - current_Q).mean()
-
         
-        # data_q = current_Q.unsqueeze(1)
+        # 找到数据动作对应的Q值
+        data_action_indices = action_sample.argmax(dim=1)
+        data_q = all_q.gather(1, data_action_indices.unsqueeze(1))
         
-        # action_preds 转化为one-hot
-        action_argmax = action_preds.argmax(dim=1)
-        action_one_hot = torch.eye(num_actions).to(action_preds.device)[action_argmax]
+        # CQL正则化：log(sum(exp(Q))) - Q(s,a_data)
+        cql_regularizer = (logsumexp_q - data_q).mean()
         
-        Q = self.critic(states, action_one_hot)
-        # policy_q = Q.unsqueeze(1)
-        
-        # 最终的 critic 损失 = 标准 TD 误差 + CQL 正则项
-        critic_loss = F.mse_loss(current_Q, target_Q) + self.alpha * cql_regularizer
+        # 最终的 critic 损失 = 标准 TD 误差 + 渐进式CQL 正则项
+        critic_loss = F.mse_loss(current_Q, target_Q) + cql_alpha * cql_regularizer
 
         # Optimize the critic
         self.critic_optimizer.zero_grad()
@@ -169,18 +159,18 @@ class SequenceTrainer(Trainer):
         self.critic_optimizer.step()
         
         # 当前预测动作的Q值
+        action_argmax = action_preds.argmax(dim=1)
+        action_one_hot = torch.eye(num_actions).to(action_preds.device)[action_argmax]
         new_Q = self.critic(states, action_one_hot)
 
-        # Algorithm 1, line11, line12 : 计算 actor loss
-        # 在 CQL 方法中，我们仍然使用类似的 actor 更新
+        # Actor loss：分离的alpha参数，更注重BC
+        actor_alpha = max(0.01, min(0.05 * (step / max_cql_steps), 0.05))  # 渐进式actor权重，最大0.05
         
-        # lmbda = self.alpha / new_Q.abs().mean().detach()
-        
-        # 离散动作使用交叉熵损失
+        # 行为克隆损失
         bc_loss = F.cross_entropy(action_preds, action_sample.argmax(dim=-1))
-        # self.alpha = 0.0
-
-        actor_loss = -self.alpha * new_Q.mean() + bc_loss
+        
+        # Actor loss: BC为主，Q值引导为辅
+        actor_loss = bc_loss - actor_alpha * new_Q.mean()  # 注意符号：最大化Q值
 
         # Optimize the actor 训练主网络
         self.optimizer.zero_grad()
@@ -199,11 +189,12 @@ class SequenceTrainer(Trainer):
         for param, target_param in zip(self.actor.parameters(), self.actor_target.parameters()):
             target_param.data.copy_(self.tau * param.data + (1 - self.tau) * target_param.data)
 
+        # 返回详细训练信息
         return (critic_loss.detach().cpu().item(),
                 actor_loss.detach().cpu().item(),
                 new_Q.mean().detach().cpu().item(),
                 bc_loss.detach().cpu().item(),
-                None)
+                cql_alpha)  # 返回当前CQL权重用于监控
     
     # IQL 的方法
     def train_step_iql(self,step):

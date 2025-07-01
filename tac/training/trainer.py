@@ -54,6 +54,7 @@ class Trainer:
         q_losses = []
         policy_losses = []
         value_losses = []
+        cql_alphas = []  # 新增：记录CQL权重变化
         
         logs = dict()
 
@@ -62,12 +63,15 @@ class Trainer:
         self.actor.train()  # 设置模型为训练模式
         print("num_steps",num_steps)
         adv_mean = None
+        cql_alpha_current = None
         for _ in tqdm(range(num_steps), desc="train progress"):
             self.total_it += 1
             if self.mode == 'tacr':
                 q_loss,policy_loss,q_mean,bc_loss,value_loss = self.train_step(self.total_it)
             elif self.mode == 'cql':
-                q_loss,policy_loss,q_mean,bc_loss,value_loss = self.train_step_cql(self.total_it)
+                q_loss,policy_loss,q_mean,bc_loss,cql_alpha_current = self.train_step_cql(self.total_it)
+                value_loss = None
+                cql_alphas.append(cql_alpha_current)
             elif self.mode == 'iql':
                 q_loss,policy_loss,q_mean,adv_mean,value_loss = self.train_step_iql(self.total_it)
             q_losses.append(q_loss)
@@ -86,7 +90,10 @@ class Trainer:
             logs['adv_mean'] = np.mean(adv_mean)
         if value_loss is not None:
             logs['value_loss'] = np.mean(value_losses)
-        # logs['training/train_loss_std'] = np.std(train_losses)
+        # 新增：CQL相关日志
+        if cql_alphas:
+            logs['cql_alpha'] = np.mean(cql_alphas)
+            logs['max_cql_alpha'] = np.max(cql_alphas)
 
         for k in self.diagnostics:
             logs[k] = self.diagnostics[k]
@@ -96,6 +103,11 @@ class Trainer:
             print(f'Iteration {iter_num}')
             for k, v in logs.items():
                 print(f'{k:15s}: {v}')
+            
+            # 特别显示CQL训练进度
+            if self.mode == 'cql' and cql_alpha_current is not None:
+                progress_percent = min(100, (self.total_it / 50000) * 100)
+                print(f'{"CQL Progress":15s}: {progress_percent:.1f}% (Alpha: {cql_alpha_current:.4f})')
 
         return logs
 

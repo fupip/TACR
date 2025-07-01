@@ -323,7 +323,7 @@ if __name__ == '__main__':
     parser.add_argument('--env', type=str, default='stock')
     parser.add_argument('--seed', type=int, default=0)
     parser.add_argument('--u', type=int, default=60) # 40 (kdd, hightech, dow), 20 (ndx, mdax, csi)
-    parser.add_argument('--alpha', type=float, default=0.9) # 1.6 (kdd), 2. (hightech), 1.4 (dow), 0.9 (ndx, mdax, csi)
+    parser.add_argument('--alpha', type=float, default=0.9) # 注意：CQL模式下内部使用渐进式调度，此参数仅用于TACR模式
     parser.add_argument('--pct_traj', type=float, default=1.)
     parser.add_argument('--batch_size', type=int, default=64)
     parser.add_argument('--embed_dim', type=int, default=128)
