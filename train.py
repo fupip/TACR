@@ -251,11 +251,24 @@ def main(variant):
     warmup_steps = variant['warmup_steps']
     total_steps = variant['max_iters'] * variant['num_steps_per_iter']  # 总训练步数
     
+    base_lr = variant['learning_rate']
+    min_lr = 1e-6
+    warmup_steps = int(0.05 * total_steps)
+    
+    
     print(f"Learning Rate Schedule Configuration:")
     print(f"  Initial Learning Rate: {variant['learning_rate']}")
     print(f"  Warmup Steps: {warmup_steps}")
     print(f"  Total Training Steps: {total_steps}")
     print(f"  Decay Steps: {max(0, total_steps - warmup_steps)}")
+    
+
+
+    optimizer = torch.optim.AdamW(
+        model.parameters(),
+        lr=base_lr,
+        weight_decay=variant['weight_decay'],
+    )
     
     optimizer = torch.optim.AdamW(
         model.parameters(),
@@ -266,15 +279,13 @@ def main(variant):
     # Improved learning rate schedule: warmup + cosine decay
     def lr_lambda(step):
         if step < warmup_steps:
-            # Warmup phase: linear growth
-            return (step + 1) / warmup_steps
-        elif total_steps <= warmup_steps:
-            # If total training steps don't exceed warmup steps, maintain max learning rate
-            return 1.0
-        else:
-            # Post-warmup: cosine decay
-            progress = (step - warmup_steps) / (total_steps - warmup_steps)
-            return 0.5 * (1.0 + np.cos(np.pi * progress))
+            # 线性 warmup 到 base_lr
+            return float(step + 1) / float(warmup_steps)
+        progress = (step - warmup_steps) / max(1, (total_steps - warmup_steps))
+        # min_lr_frac 控制最终学习率不为0
+        min_lr_frac = min_lr / base_lr
+        cosine_decay = 0.5 * (1 + np.cos(np.pi * progress))
+        return max(min_lr_frac, cosine_decay)
     
     scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda)
 

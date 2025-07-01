@@ -113,14 +113,17 @@ class SequenceTrainer(Trainer):
         next_action_preds = next_action_preds.reshape(-1, self.action_dim)[attention_mask.reshape(-1) > 0]
         dones = dones.reshape(-1, 1)[attention_mask.reshape(-1) > 0]
         
-        # next_action_preds 转化为one-hot
-        next_action_argmax = next_action_preds.argmax(dim=1)
-        next_action_one_hot = torch.eye(num_actions).to(next_action_preds.device)[next_action_argmax]
+        # 枚举所有动作
+        all_actions = torch.eye(num_actions).to(next_state.device)
+        next_repeated_states = next_state.unsqueeze(1).repeat(1, num_actions, 1).reshape(-1, self.state_dim)
+        next_repeated_actions = all_actions.unsqueeze(0).repeat(len(next_state), 1, 1).reshape(-1, num_actions)
 
-        # Algorithm 1, line9, line10
-        # Compute the target Q value
-        target_Q = self.critic_target(next_state, next_action_one_hot)
-        target_Q = rewards + (1 - dones) * self.discount * target_Q
+        # 批量计算所有动作下的 Q 值
+        next_all_q = self.critic_target(next_repeated_states, next_repeated_actions).reshape(-1, num_actions)
+
+        # 取最大 Q 值作为目标 Q 值
+        next_q_values = next_all_q.max(dim=1, keepdim=True)[0]
+        target_Q = rewards + (1 - dones) * self.discount * next_q_values
         target_Q = target_Q.detach()
 
         # Get current Q estimates

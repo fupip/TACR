@@ -131,6 +131,7 @@ def validate_cql_improvements():
     print("\n5. 验证模型维度...")
     try:
         device = 'cuda' if torch.cuda.is_available() else 'cpu'
+        device = "cpu"
         model = TransformerActor(
             state_dim=state_space,
             act_dim=3,  # 明确使用3维动作
