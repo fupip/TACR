@@ -96,6 +96,8 @@ def main(variant):
     # print("all states.shape",states.shape)
     state_mean, state_std = np.mean(states, axis=0), np.std(states, axis=0) + 1e-6
     num_timesteps = sum(traj_lens)
+    
+
 
     print('=' * 50)
     print(f'Starting new experiment: {env_name} {dataset}')
@@ -103,6 +105,12 @@ def main(variant):
     print(f'Average return: {np.mean(returns):.2f}, std: {np.std(returns):.2f}')
     print(f'Max return: {np.max(returns):.2f}, min: {np.min(returns):.2f}')
     print('=' * 50)
+    
+    # ================== 统计全局 reward mean/std ==================
+    all_rewards = np.concatenate([path['rewards'] for path in trajectories], axis=0)
+    reward_mean = all_rewards.mean()
+    reward_std = all_rewards.std() + 1e-8
+    print(f'[Reward Normalize] mean={reward_mean:.6f}, std={reward_std:.6f}')
 
     batch_size = variant['batch_size'] # default 64
 
