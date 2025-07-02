@@ -259,7 +259,7 @@ def main(variant):
     warmup_steps = variant['warmup_steps']
     total_steps = variant['max_iters'] * variant['num_steps_per_iter']  # 总训练步数
     
-    base_lr = variant['learning_rate']
+    base_lr = 1e-6 #variant['learning_rate']
     min_lr = 1e-6
     warmup_steps = int(0.05 * total_steps)
     
@@ -278,11 +278,6 @@ def main(variant):
         weight_decay=variant['weight_decay'],
     )
     
-    optimizer = torch.optim.AdamW(
-        model.parameters(),
-        lr=variant['learning_rate'],
-        weight_decay=variant['weight_decay'],
-    )
     
     # Improved learning rate schedule: warmup + cosine decay
     def lr_lambda(step):
@@ -302,7 +297,7 @@ def main(variant):
         optimizer=optimizer,
         batch_size=batch_size,
         get_batch=get_batch,
-        scheduler=scheduler,
+        # scheduler=scheduler,
         action_dim=act_dim,
         state_dim=state_dim,
         state_mean=state_mean,
