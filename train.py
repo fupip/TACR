@@ -259,7 +259,7 @@ def main(variant):
     warmup_steps = variant['warmup_steps']
     total_steps = variant['max_iters'] * variant['num_steps_per_iter']  # 总训练步数
     
-    base_lr = 1e-6 #variant['learning_rate']
+    base_lr = variant['learning_rate']
     min_lr = 1e-6
     warmup_steps = int(0.05 * total_steps)
     
@@ -290,7 +290,7 @@ def main(variant):
         cosine_decay = 0.5 * (1 + np.cos(np.pi * progress))
         return max(min_lr_frac, cosine_decay)
     
-    scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda)
+    # scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda)
 
     trainer = SequenceTrainer(
         model=model,
@@ -345,7 +345,7 @@ if __name__ == '__main__':
     parser.add_argument('--n_head', type=int, default=4)
     parser.add_argument('--activation_function', type=str, default='relu')
     parser.add_argument('--dropout', type=float, default=0.1)
-    parser.add_argument('--learning_rate', '-lr', type=float, default=1e-4)
+    parser.add_argument('--learning_rate', '-lr', type=float, default=1e-6)
     parser.add_argument('--critic_learning_rate', type=float, default=1e-6) # 1e-4 (hightech), 1e-6 (others)
     parser.add_argument('--weight_decay', '-wd', type=float, default=1e-4)
     parser.add_argument('--warmup_steps', type=int, default=10000)
