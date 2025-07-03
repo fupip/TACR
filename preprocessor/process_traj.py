@@ -34,10 +34,10 @@ class trajectory:
 
         self.data = self.df.loc[self.day, :]
         self.state = [
-                self.data.open,
-                self.data.high,
-                self.data.low,
-                self.data.close,
+                self.data.open_z,
+                self.data.high_z,
+                self.data.low_z,
+                self.data.close_z,
         ] + [
             self.data[tech]
             for tech in self.tech_indicator_list
@@ -58,10 +58,10 @@ class trajectory:
             self.data = self.df.loc[self.day, :]
             
             self.state = [
-                self.data.open,
-                self.data.high,
-                self.data.low,
-                self.data.close,
+                self.data.open_z,
+                self.data.high_z,
+                self.data.low_z,
+                self.data.close_z,
                 ] + [
                     self.data[tech]
                     for tech in self.tech_indicator_list
@@ -115,10 +115,10 @@ class trajectory:
         self.day = 0
         self.data = self.df.loc[self.day, :]
         self.state = [
-                self.data.open,
-                self.data.high,
-                self.data.low,
-                self.data.close,
+                self.data.open_z,
+                self.data.high_z,
+                self.data.low_z,
+                self.data.close_z,
         ] + [
             self.data[tech]
             for tech in self.tech_indicator_list

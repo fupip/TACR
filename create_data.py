@@ -56,29 +56,36 @@ def create_data(variant):
     combination = list(itertools.product(list_date,list_ticker))
 
     
-    processed_full = pd.DataFrame(combination,columns=["date","tic"]).merge(processed,on=["date","tic"],how="left")
-    processed_full = processed_full[processed_full['date'].isin(processed['date'])]
-    processed_full = processed_full.sort_values(['date','tic'])
-    processed_full = processed_full.fillna(0)
-    processed_full.sort_values(['date','tic'],ignore_index=True).head(10)
+    bar_data = pd.DataFrame(combination,columns=["date","tic"]).merge(processed,on=["date","tic"],how="left")
+    bar_data = bar_data[bar_data['date'].isin(processed['date'])]
+    bar_data = bar_data.sort_values(['date','tic'])
+    bar_data = bar_data.fillna(0)
+    bar_data.sort_values(['date','tic'],ignore_index=True).head(10)
     
     # 添加 close-ma60差值 标准化
-    processed_full['close_ma60_diff'] = (processed_full['close'] - processed_full['close_60_sma'])/processed_full['close_60_sma']
+    bar_data['close_ma60_diff'] = (bar_data['close'] - bar_data['close_60_sma'])/bar_data['close_60_sma']
     
-    print(processed_full.head())
+    # open high low close 标准化
+    bar_data['open_z'] = (bar_data['open'] - bar_data['open'].rolling(window=60).mean())/bar_data['open'].rolling(window=60).std()
+    bar_data['high_z'] = (bar_data['high'] - bar_data['high'].rolling(window=60).mean())/bar_data['high'].rolling(window=60).std()
+    bar_data['low_z'] = (bar_data['low'] - bar_data['low'].rolling(window=60).mean())/bar_data['low'].rolling(window=60).std()
+    bar_data['close_z'] = (bar_data['close'] - bar_data['close'].rolling(window=60).mean())/bar_data['close'].rolling(window=60).std()
+    bar_data['close_60_sma_z'] = (bar_data['close_60_sma'] - bar_data['close_60_sma'].rolling(window=60).mean())/bar_data['close_60_sma'].rolling(window=60).std()
     
-    tech_features = ["close_60_sma","close_ma60_diff"]
+    print(bar_data.head())
+    
+    tech_features = ["close_60_sma_z","close_ma60_diff"]
 
     # Split train and test datasets
     if variant['dataset'] == "dow":
-        train = data_split(processed_full, '2009-01-01','2019-01-01')
-        trade = data_split(processed_full, '2019-01-01','2020-09-24')
+        train = data_split(bar_data, '2009-01-01','2019-01-01')
+        trade = data_split(bar_data, '2019-01-01','2020-09-24')
     elif variant['dataset'] == "hightech":
-        train = data_split(processed_full, '2006-10-20','2012-11-16')
-        trade = data_split(processed_full, '2012-11-16','2013-11-21')
+        train = data_split(bar_data, '2006-10-20','2012-11-16')
+        trade = data_split(bar_data, '2012-11-16','2013-11-21')
     else:
-        train = data_split(processed_full, '2011-01-01','2024-05-18') # 3189 - 3678  15.3%
-        trade = data_split(processed_full, '2024-05-19','2025-05-28') # 3690 - 3836   3.9%
+        train = data_split(bar_data, '2011-01-01','2024-05-18') # 3189 - 3678  15.3%
+        trade = data_split(bar_data, '2024-05-19','2025-05-28') # 3690 - 3836   3.9%
 
     if not os.path.exists("datasets"):
         os.makedirs("datasets")
