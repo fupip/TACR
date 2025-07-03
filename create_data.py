@@ -56,15 +56,17 @@ def create_data(variant):
     combination = list(itertools.product(list_date,list_ticker))
 
     # 分别列出combination 与processed 中 date 列的类型
-    print(type(combination[0][0]))
-    print(type(processed['date'].min()))
-    print(type(processed['date'].max()))
+    # print(type(combination[0][0]))
+    # print(type(processed['date'].min()))
+    # print(type(processed['date'].max()))
     
     processed_full = pd.DataFrame(combination,columns=["date","tic"]).merge(processed,on=["date","tic"],how="left")
     processed_full = processed_full[processed_full['date'].isin(processed['date'])]
     processed_full = processed_full.sort_values(['date','tic'])
     processed_full = processed_full.fillna(0)
     processed_full.sort_values(['date','tic'],ignore_index=True).head(10)
+    
+    print(processed_full.head())
 
     # Split train and test datasets
     if variant['dataset'] == "dow":
