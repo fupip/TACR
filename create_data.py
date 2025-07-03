@@ -55,16 +55,15 @@ def create_data(variant):
     list_date = list(pd.date_range(processed['date'].min(),processed['date'].max()).astype(str))
     combination = list(itertools.product(list_date,list_ticker))
 
-    # 分别列出combination 与processed 中 date 列的类型
-    # print(type(combination[0][0]))
-    # print(type(processed['date'].min()))
-    # print(type(processed['date'].max()))
     
     processed_full = pd.DataFrame(combination,columns=["date","tic"]).merge(processed,on=["date","tic"],how="left")
     processed_full = processed_full[processed_full['date'].isin(processed['date'])]
     processed_full = processed_full.sort_values(['date','tic'])
     processed_full = processed_full.fillna(0)
     processed_full.sort_values(['date','tic'],ignore_index=True).head(10)
+    
+    # 添加 close-ma60差值 标准化
+    processed_full['close_ma60_diff'] = (processed_full['close'] - processed_full['close_60_sma'])/processed_full['close_60_sma']
     
     print(processed_full.head())
 
