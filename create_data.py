@@ -66,6 +66,8 @@ def create_data(variant):
     processed_full['close_ma60_diff'] = (processed_full['close'] - processed_full['close_60_sma'])/processed_full['close_60_sma']
     
     print(processed_full.head())
+    
+    tech_features = ["close_60_sma","close_ma60_diff"]
 
     # Split train and test datasets
     if variant['dataset'] == "dow":
@@ -96,13 +98,13 @@ def create_data(variant):
     stock_dimension = len(train.tic.unique())
     # 状态空间
     # (O, H, L, C) * 股票代码数量 + 技术指标数量 * 股票代码数量
-    state_space = 4 * stock_dimension + len(config.TECHNICAL_INDICATORS_LIST) * stock_dimension
+    state_space = 4 * stock_dimension + len(tech_features) * stock_dimension
     print(f"Stock Dimension: {stock_dimension}, State Space: {state_space}")
 
     env_kwargs = {
         "state_space": state_space,
         "stock_dim": stock_dimension,
-        "tech_indicator_list": config.TECHNICAL_INDICATORS_LIST,
+        "tech_indicator_list": tech_features,
         "action_space": 3 # stock_dimension [0,0,0]
     }
     env = trajectory(df=train, dataset=variant['dataset'], **env_kwargs)

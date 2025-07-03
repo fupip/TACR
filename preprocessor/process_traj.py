@@ -42,6 +42,7 @@ class trajectory:
             self.data[tech]
             for tech in self.tech_indicator_list
         ]
+        print("state: ", self.state)
         self.terminal = False
         self.last_day_memory = self.data
 
