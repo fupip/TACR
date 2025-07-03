@@ -104,7 +104,7 @@ def create_data(variant):
     print(f"Train dataset has NaN values: {has_nan}")
     
     
-    train = train.iloc[60:]
+    train = train.iloc[60:].reset_index(drop=True)
     
     # 检查整个DataFrame是否有任何NaN值
     has_nan = train.isnull().any().any()

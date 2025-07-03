@@ -34,8 +34,8 @@ class Trainer:
         self.critic_target = copy.deepcopy(self.critic)
         self.critic_optimizer = torch.optim.Adam(self.critic.parameters(), lr=crtic_lr)
 
-        self.discount = 0.99
-        self.tau = 0.005
+        self.discount = 0.99    # Q-learning discount factor
+        self.tau = 0.005         # soft update factor
         
         self.value_net = ValueNet(state_dim).to(device)
         self.value_net_optimizer = torch.optim.Adam(self.value_net.parameters(), lr=crtic_lr)

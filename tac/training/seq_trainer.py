@@ -44,6 +44,7 @@ class SequenceTrainer(Trainer):
         # Compute critic loss
         critic_loss = F.mse_loss(current_Q, target_Q)
 
+        
         # Optimize the critic
         self.critic_optimizer.zero_grad()
         critic_loss.backward()
@@ -63,7 +64,8 @@ class SequenceTrainer(Trainer):
         self.optimizer.zero_grad()
         actor_loss.backward()
 
-        torch.nn.utils.clip_grad_norm_(self.actor.parameters(), .25)
+        torch.nn.utils.clip_grad_norm_(self.critic.parameters(), .5)
+        torch.nn.utils.clip_grad_norm_(self.actor.parameters(), .5)
         self.optimizer.step()
 
         if self.scheduler is not None:
@@ -80,7 +82,7 @@ class SequenceTrainer(Trainer):
                 actor_loss.detach().cpu().item(),
                 Q.mean().detach().cpu().item(),
                 bc_loss.detach().cpu().item(),
-                None # value_loss
+                lmbda.detach().cpu().item()
                 )
 
 
