@@ -99,6 +99,12 @@ def create_data(variant):
     ###################Create suboptimal trajectories########################
 
     train = pd.read_csv("datasets/"+variant['dataset']+"_train.csv", index_col=[0])
+    # 检查整个DataFrame是否有任何NaN值
+    has_nan = train.isnull().any().any()
+    print(f"Train dataset has NaN values: {has_nan}")
+    
+    
+    train = train.iloc[60:]
     
     # 检查整个DataFrame是否有任何NaN值
     has_nan = train.isnull().any().any()
