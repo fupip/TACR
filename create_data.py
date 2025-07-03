@@ -147,11 +147,12 @@ def create_data(variant):
     env = trajectory(df=train, dataset=variant['dataset'], **env_kwargs)
     
     paths = []
-    for i in range(12):
-        traj,total_reward = traj_generator(env, i)
-        if total_reward > 0.15:
-            print(f"[{i}] total_reward: {total_reward}")
-            paths.append(traj)
+    # for i in range(12):
+    i = 2
+    traj,total_reward = traj_generator(env, i)
+    if total_reward > 0.15:
+        print(f"[{i}] total_reward: {total_reward}")
+        paths.append(traj)
 
     print(f"total paths: {len(paths)}")
     if not os.path.exists("trajectory"):
@@ -161,7 +162,7 @@ def create_data(variant):
     with open(f'{name}.pkl', 'wb') as f:
         pickle.dump(paths, f)
 
-    print("Created trajectories")
+    print("Created trajectories:",len(paths))
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
