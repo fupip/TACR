@@ -66,11 +66,13 @@ def create_data(variant):
     bar_data['close_ma60_diff'] = (bar_data['close'] - bar_data['close_60_sma'])/bar_data['close_60_sma']
     
     # open high low close 标准化
-    bar_data['open_z'] = (bar_data['open'] - bar_data['open'].rolling(window=60).mean())/bar_data['open'].rolling(window=60).std()
-    bar_data['high_z'] = (bar_data['high'] - bar_data['high'].rolling(window=60).mean())/bar_data['high'].rolling(window=60).std()
-    bar_data['low_z'] = (bar_data['low'] - bar_data['low'].rolling(window=60).mean())/bar_data['low'].rolling(window=60).std()
-    bar_data['close_z'] = (bar_data['close'] - bar_data['close'].rolling(window=60).mean())/bar_data['close'].rolling(window=60).std()
-    bar_data['close_60_sma_z'] = (bar_data['close_60_sma'] - bar_data['close_60_sma'].rolling(window=60).mean())/bar_data['close_60_sma'].rolling(window=60).std()
+    close_mean = bar_data['close'].rolling(window=60).mean()
+    close_std = bar_data['close'].rolling(window=60).std()
+    bar_data['open_z'] = (bar_data['open'] - close_mean)/close_std
+    bar_data['high_z'] = (bar_data['high'] - close_mean)/close_std
+    bar_data['low_z'] = (bar_data['low'] - close_mean)/close_std
+    bar_data['close_z'] = (bar_data['close'] - close_mean)/close_std
+    bar_data['close_60_sma_z'] = (bar_data['close_60_sma'] - close_mean)/close_std
     
     print(bar_data.head())
     
