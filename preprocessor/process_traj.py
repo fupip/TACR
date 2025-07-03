@@ -108,7 +108,7 @@ class trajectory:
             self.reward = portfolio_return
             
             # print(f"portfolio_return: {portfolio_return}")
-        # print("action: ", action)
+        print("state: ", self.state)
         return self.state, self.reward, self.terminal, action
 
     def reset(self):
