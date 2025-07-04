@@ -127,10 +127,12 @@ def experiment(variant):
             n_inner=4 * variant['embed_dim'],
             activation_function=variant['activation_function'],
             n_positions=1024,
-            resid_pdrop=variant['dropout'],
-            attn_pdrop=variant['dropout'])
+            resid_pdrop=0.0, #variant['dropout'],
+            attn_pdrop=0.0 #variant['dropout']
+            )
 
         model.load_state_dict(torch.load(group_name+'.pt'))
+        print(f"load model success {group_name}.pt")
 
         episode_return, episode_length = eval_test(
             env,
