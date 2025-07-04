@@ -57,6 +57,8 @@ def experiment(variant):
     train = pd.read_csv("datasets/" + dataset+"_train.csv", index_col=[0])
     trade = pd.read_csv("datasets/" + dataset + "_trade.csv", index_col=[0])
     max_ep_len = train.index[-1]
+    
+    tech_features = ["close_60_sma_z","close_ma60_diff"]
 
     # 对于策略测试，可能不需要轨迹数据
     if test_strategy == 'model':
@@ -66,7 +68,7 @@ def experiment(variant):
         state_space = trajectories[0]['observations'].shape[1]
     else:
         # 对于策略测试，从训练数据中推断状态空间
-        state_space = 4 + len(config.TECHNICAL_INDICATORS_LIST)  # open, high, low, close + 技术指标
+        state_space = 4 + len(tech_features)  # open, high, low, close + 技术指标
         
     stock_dimension = len(train.tic.unique())
 
@@ -79,7 +81,7 @@ def experiment(variant):
         "transaction_cost": 0.002,
         "state_space": state_space,
         "stock_dim": stock_dimension,
-        "tech_indicator_list": config.TECHNICAL_INDICATORS_LIST,
+        "tech_indicator_list": tech_features,
         "action_space": 3,
         "mode": "test",
         "turbulence_threshold": turbulence_threshold,

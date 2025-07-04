@@ -95,10 +95,10 @@ class StockPortfolioEnv(gym.Env):
             )
         else:
             self.state = [
-                self.data.open,
-                self.data.high,
-                self.data.low,
-                self.data.close,
+                self.data.open_z,
+                self.data.high_z,
+                self.data.low_z,
+                self.data.close_z,
                 ] + [
                     self.data[tech]
                     for tech in self.tech_indicator_list
@@ -228,10 +228,10 @@ class StockPortfolioEnv(gym.Env):
                 )
             else:
                 self.state = [
-                    self.data.open,
-                    self.data.high,
-                    self.data.low,
-                    self.data.close,
+                    self.data.open_z,
+                    self.data.high_z,
+                    self.data.low_z,
+                    self.data.close_z,
                     ] + [
                         self.data[tech]
                         for tech in self.tech_indicator_list
@@ -289,10 +289,10 @@ class StockPortfolioEnv(gym.Env):
             )
         else:
             self.state = [
-                self.data.open,
-                self.data.high,
-                self.data.low,
-                self.data.close,
+                self.data.open_z,
+                self.data.high_z,
+                self.data.low_z,
+                self.data.close_z,
                 ] + [
                     self.data[tech]
                     for tech in self.tech_indicator_list
