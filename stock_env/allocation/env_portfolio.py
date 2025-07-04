@@ -154,7 +154,7 @@ class StockPortfolioEnv(gym.Env):
                         * df_daily_return["daily_return"].mean()
                         / df_daily_return["daily_return"].std())
 
-                print("Sharpe: ", round(sharpe, 3), )
+                print("sharpe ratio  : ", round(sharpe, 3), )
             print("=================================")
 
             # if self.mode == "test":

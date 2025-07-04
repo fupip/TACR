@@ -23,7 +23,7 @@ def main(variant):
     train = pd.read_csv("datasets/"+dataset+"_train.csv", index_col=[0])
     max_ep_len = train.index[-1]
     
-    
+    tech_features = ["close_60_sma_z","close_ma60_diff"]
 
     # Load suboptimal trajectories
     dataset_path = f'{"trajectory/" + variant["dataset"] + "_traj.pkl"}'
@@ -41,7 +41,7 @@ def main(variant):
         "transaction_cost": 0.005,
         "state_space": state_space,
         "stock_dim": stock_dimension,
-        "tech_indicator_list": config.TECHNICAL_INDICATORS_LIST,
+        "tech_indicator_list": tech_features,
         "action_space": 3,
     }
     env = StockPortfolioEnv(df=train, **env_kwargs)
