@@ -58,6 +58,8 @@ def experiment(variant):
     trade = pd.read_csv("datasets/" + dataset + "_trade.csv", index_col=[0])
     max_ep_len = train.index[-1]
     
+    train = train.iloc[60:].reset_index(drop=True)
+    
     tech_features = ["close_60_sma_z","close_ma60_diff"]
 
     # 对于策略测试，可能不需要轨迹数据
@@ -87,7 +89,7 @@ def experiment(variant):
         "turbulence_threshold": turbulence_threshold,
     }
 
-    env = StockPortfolioEnv(df=trade, **env_kwargs)
+    env = StockPortfolioEnv(df=train, **env_kwargs)
 
     seed = variant['seed']
     env.seed(seed)
