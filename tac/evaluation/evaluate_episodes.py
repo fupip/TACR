@@ -16,8 +16,8 @@ def eval_test(
     model.eval()
     model.to(device=device)
 
-    state_mean = torch.from_numpy(state_mean).to(device=device)
-    state_std = torch.from_numpy(state_std).to(device=device)
+    # state_mean = torch.from_numpy(state_mean).to(device=device)
+    # state_std = torch.from_numpy(state_std).to(device=device)
 
     state = env.reset()
     state = np.array(state)
@@ -39,7 +39,7 @@ def eval_test(
             rewards = torch.cat([rewards, torch.zeros(1, device=device)])
 
             action = model.get_action(
-                (states.to(dtype=torch.float32) - state_mean) / state_std,
+                states.to(dtype=torch.float32),
                 actions.to(dtype=torch.float32),
                 rewards.to(dtype=torch.float32),
                 timesteps.to(dtype=torch.long),
