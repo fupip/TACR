@@ -245,7 +245,8 @@ class StockPortfolioEnv(gym.Env):
             
             # print("action_memory[-2]: ", self.actions_memory[-2])
             transaction_fee = self.transaction_cost * abs(new_pos - old_pos)
-            self.total_fee += transaction_fee
+            real_fee = self.portfolio_value * transaction_fee
+            self.total_fee += real_fee
             portfolio_return = ((self.data.close / last_day_memory.close) - 1) * new_pos - transaction_fee
             # print("portfolio_return  : ", portfolio_return)
 
@@ -264,7 +265,8 @@ class StockPortfolioEnv(gym.Env):
             new_portfolio_value = self.portfolio_value * (1 + portfolio_return)
             self.portfolio_value = new_portfolio_value
             print(f"new amount        : {new_portfolio_value:.2f}")
-            print(f"transaction fee   : {transaction_fee:.2f}")
+            print(f"transaction fee   : {transaction_fee:.4f}")
+            print(f"real fee          : {real_fee:.4f}")
             print(f"today return      : {portfolio_return*100.0:.2f} %")
             print("--------------------------------------------")
             
