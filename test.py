@@ -89,7 +89,8 @@ def experiment(variant):
         "turbulence_threshold": turbulence_threshold,
     }
 
-    env = StockPortfolioEnv(df=train, **env_kwargs)
+    # 创建测试环境
+    env = StockPortfolioEnv(df=trade, **env_kwargs)
 
     seed = variant['seed']
     env.seed(seed)

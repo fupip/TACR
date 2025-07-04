@@ -110,6 +110,7 @@ class StockPortfolioEnv(gym.Env):
         self.portfolio_value = self.initial_amount
         self.turbulence = 0
         self.pre_weights = 0
+        self.total_fee = 0.0
         # memorize portfolio value each step
         self.asset_memory = [self.initial_amount]
         # memorize portfolio return each step
@@ -137,8 +138,10 @@ class StockPortfolioEnv(gym.Env):
             # plt.close()
 
             print("=================================")
-            print("begin_total_asset:{}".format(self.asset_memory[0]))
-            print("end_total_asset  :{}".format(int(self.portfolio_value)))
+            print(f"begin_total_asset: {self.asset_memory[0]:.2f}")
+            print(f"end_total_asset  : {self.portfolio_value:.2f}")
+            print(f"total fee        : {self.total_fee:.2f}")
+            print(f"total return     : {self.portfolio_value - self.asset_memory[0]:.2f}")
 
             df_daily_return = pd.DataFrame(self.portfolio_return_memory)
             df_daily_return.columns = ["daily_return"]
@@ -241,8 +244,9 @@ class StockPortfolioEnv(gym.Env):
             # Equation (19) : Portfolio value
             
             # print("action_memory[-2]: ", self.actions_memory[-2])
-            
-            portfolio_return = ((self.data.close / last_day_memory.close) - 1) * new_pos - self.transaction_cost * abs(new_pos - old_pos)
+            transaction_fee = self.transaction_cost * abs(new_pos - old_pos)
+            self.total_fee += transaction_fee
+            portfolio_return = ((self.data.close / last_day_memory.close) - 1) * new_pos - transaction_fee
             # print("portfolio_return  : ", portfolio_return)
 
             # update portfolio value
@@ -260,6 +264,7 @@ class StockPortfolioEnv(gym.Env):
             new_portfolio_value = self.portfolio_value * (1 + portfolio_return)
             self.portfolio_value = new_portfolio_value
             print(f"new amount        : {new_portfolio_value:.2f}")
+            print(f"transaction fee   : {transaction_fee:.2f}")
             print(f"today return      : {portfolio_return*100.0:.2f} %")
             print("--------------------------------------------")
             
