@@ -59,7 +59,7 @@ def main(variant):
     random.seed(seed)
 
     state_dim = env.observation_space.shape[0]
-    act_dim = env.action_space.shape[0]
+    act_dim = 3 # env.action_space.shape[0]
 
     # Algorithm 1, line3 : Set the length of the sequence u
     u = variant['u']
@@ -89,7 +89,6 @@ def main(variant):
     
     # states[0].shape (3733, 360)
     # print("states[0].shape",states[0].shape) 
-    
 
     # used for input normalization
     states = np.concatenate(states, axis=0) # 第1维合并起来,第二维不变 即 (3733*5,360)
@@ -225,6 +224,37 @@ def main(variant):
     print("n_timesteps.shape",n_timesteps.shape)
     print("mask.shape",mask.shape)
     print("*" *50 )
+    
+    states = trajectories[0]['observations']
+    actions = trajectories[0]['actions']
+    print("states.shape",states.shape)
+    print("actions.shape",actions.shape)
+    # i = 0 
+    long_count = 0
+    short_count = 0
+    hold_count = 0
+    for state,action in zip(states,actions):
+        state_list = state.tolist()
+        action_list = action.tolist()
+        print("state",state_list,"action",action_list)
+        # 获取action中大于0的索引 能否用argmax
+        action_argmax = np.argmax(action_list)
+        if action_argmax == 0:
+            long_count += 1
+        elif action_argmax == 1:
+            hold_count += 1
+        else:
+            short_count += 1
+    print("long_count",long_count,"short_count",short_count,"hold_count",hold_count)
+        
+
+    # print("states",states)
+    # print("actions",actions)
+    # print("rewards",rewards)
+    # print("dones",dones)
+    # print("next_states",next_states)
+    # print("next_actions",next_actions)
+    # print("next_rewards",next_rewards)
     # states.shape torch.Size([64, 20, 360])
     # actions.shape torch.Size([64, 20, 30])
     # rewards.shape torch.Size([64, 20, 1])
@@ -292,20 +322,20 @@ def main(variant):
     
     # scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda)
 
-    trainer = SequenceTrainer(
-        model=model,
-        optimizer=optimizer,
-        batch_size=batch_size,
-        get_batch=get_batch,
-        # scheduler=scheduler,
-        action_dim=act_dim,
-        state_dim=state_dim,
-        state_mean=state_mean,
-        state_std=state_std,
-        alpha=variant['alpha'],
-        crtic_lr=variant['critic_learning_rate'],
-        mode=mode
-    )
+    # trainer = SequenceTrainer(
+    #     model=model,
+    #     optimizer=optimizer,
+    #     batch_size=batch_size,
+    #     get_batch=get_batch,
+    #     # scheduler=scheduler,
+    #     action_dim=act_dim,
+    #     state_dim=state_dim,
+    #     state_mean=state_mean,
+    #     state_std=state_std,
+    #     alpha=variant['alpha'],
+    #     crtic_lr=variant['critic_learning_rate'],
+    #     mode=mode
+    # )
 
     if log_to_wandb:
         wandb.init(
@@ -316,20 +346,20 @@ def main(variant):
         )
         # wandb.watch(model)  # wandb has some bug
 
-    for iter in range(variant['max_iters']):
-        # Get current learning rate
-        current_lr = optimizer.param_groups[0]['lr']
-        print(f'Iteration {iter + 1}: Learning Rate = {current_lr:.8f}')
+    # for iter in range(variant['max_iters']):
+    #     # Get current learning rate
+    #     current_lr = optimizer.param_groups[0]['lr']
+    #     print(f'Iteration {iter + 1}: Learning Rate = {current_lr:.8f}')
         
-        outputs = trainer.train_iteration(num_steps=variant['num_steps_per_iter'], iter_num=iter + 1, print_logs=True)
+    #     outputs = trainer.train_iteration(num_steps=variant['num_steps_per_iter'], iter_num=iter + 1, print_logs=True)
         
-        # Add learning rate info to outputs
-        outputs['learning_rate'] = current_lr
+    #     # Add learning rate info to outputs
+    #     outputs['learning_rate'] = current_lr
         
-        if log_to_wandb:
-            wandb.log(outputs)
+    #     if log_to_wandb:
+    #         wandb.log(outputs)
 
-    torch.save(trainer.actor.state_dict(), group_name+'.pt')
+    # torch.save(trainer.actor.state_dict(), group_name+'.pt')
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

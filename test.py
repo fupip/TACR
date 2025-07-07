@@ -6,7 +6,7 @@ import numpy as np
 import pickle
 from stock_env.apps import config
 from stock_env.allocation.env_portfolio import StockPortfolioEnv
-from tac.evaluation.evaluate_episodes import eval_test
+from evaluate_episodes import eval_test
 from tac.models.transformer_actor import TransformerActor
 from preprocessor.strategies.ma_strategy import MovingAverageStrategy
 from preprocessor.strategies.random_strategy import RandomStrategy

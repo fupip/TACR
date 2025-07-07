@@ -66,8 +66,8 @@ def create_data(variant):
     bar_data['close_ma60_diff'] = (bar_data['close'] - bar_data['close_60_sma'])/bar_data['close_60_sma']
     
     # open high low close 标准化
-    close_mean = bar_data['close'].rolling(window=60).mean()
-    close_std = bar_data['close'].rolling(window=60).std()
+    close_mean = bar_data['close'].rolling(window=120).mean()
+    close_std = bar_data['close'].rolling(window=120).std()
     bar_data['open_z'] = (bar_data['open'] - close_mean)/close_std
     bar_data['high_z'] = (bar_data['high'] - close_mean)/close_std
     bar_data['low_z'] = (bar_data['low'] - close_mean)/close_std
@@ -104,7 +104,7 @@ def create_data(variant):
     print(f"Train dataset has NaN values: {has_nan}")
     
     
-    train = train.iloc[60:].reset_index(drop=True)
+    train = train.iloc[120:].reset_index(drop=True)
     
     # 检查整个DataFrame是否有任何NaN值
     has_nan = train.isnull().any().any()

@@ -228,13 +228,13 @@ class TransformerActor(TrajectoryModel):
             ).to(dtype=torch.long)
         else:
             attention_mask = None
-
-        # _, action_preds, return_preds = self.forward(
-        #     states, actions, rewards, timesteps, attention_mask=attention_mask, **kwargs)
+        # TACR 与 CQL算法
+        _, action_preds, return_preds = self.forward(
+            states, actions, rewards, timesteps, attention_mask=attention_mask, **kwargs)
         
         # 使用IQL算法
-        action_preds, log_probs, action_mean, alpha = self.forward_dist(
-            states, actions, rewards, timesteps, attention_mask=attention_mask, **kwargs)
+        # action_preds, log_probs, action_mean, alpha = self.forward_dist(
+        #     states, actions, rewards, timesteps, attention_mask=attention_mask, **kwargs)
         
         # print("action_preds_sample mean",action_preds_sample.mean().item(),"min",action_preds_sample.min().item(),"max",action_preds_sample.max().item())
         # print("action_preds mean",action_preds.mean().item(),"min",action_preds.min().item(),"max",action_preds.max().item())

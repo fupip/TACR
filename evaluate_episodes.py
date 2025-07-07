@@ -44,6 +44,8 @@ def eval_test(
                 rewards.to(dtype=torch.float32),
                 timesteps.to(dtype=torch.long),
             )
+            # print("actions[-1]",actions[-1])
+            # print("action",action)
             actions[-1] = action
             action = action.detach().cpu().numpy()
 
