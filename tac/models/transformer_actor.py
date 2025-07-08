@@ -231,6 +231,10 @@ class TransformerActor(TrajectoryModel):
         else:
             attention_mask = None
         # TACR 与 CQL算法
+        output_states = states.detach().cpu().numpy()
+        print("output_states shape",output_states.shape)
+        print("output_states",output_states)
+        print("--------------------------------")
         action_preds = self.forward(
             states, actions, rewards, timesteps, attention_mask=attention_mask, **kwargs)
         
