@@ -13,11 +13,11 @@ class SequenceTrainer(Trainer):
         timesteps, next_timesteps, attention_mask = self.get_batch(self.batch_size)
 
         # # Algorithm 1, line8 : Predict a action
-        state_preds, action_preds, reward_preds = self.actor.forward(
+        action_preds = self.actor.forward(
             states, actions, rewards, timesteps, attention_mask=attention_mask,
         )
 
-        next_state_preds, next_action_preds, next_reward_preds = self.actor_target.forward(
+        next_action_preds = self.actor_target.forward(
             next_state, next_actions, next_rewards, next_timesteps, attention_mask=attention_mask,
         )
 

@@ -230,7 +230,7 @@ class TransformerActor(TrajectoryModel):
         else:
             attention_mask = None
         # TACR 与 CQL算法
-        _, action_preds, return_preds = self.forward(
+        action_preds = self.forward(
             states, actions, rewards, timesteps, attention_mask=attention_mask, **kwargs)
         
         # 使用IQL算法
