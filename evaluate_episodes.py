@@ -58,8 +58,8 @@ def eval_test(
             
             print("action",action,type(action))
             
-            if np.argmax(action) == 0:
-                action = np.array([0.0,1.0,0.0])
+            # if np.argmax(action) == 0:
+            #     action = np.array([0.0,1.0,0.0])
 
             state, reward, done, result = env.step(action)
             state = np.array(state)

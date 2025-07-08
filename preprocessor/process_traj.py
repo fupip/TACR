@@ -25,6 +25,8 @@ class trajectory:
         self.action_space = action_space
         self.tech_indicator_list = tech_indicator_list
         
+        self.transaction_cost = transaction_cost
+        
         # 初始化策略
         if strategy_kwargs is None:
             strategy_kwargs = {}
@@ -45,6 +47,7 @@ class trajectory:
         print("state: ", self.state)
         self.terminal = False
         self.last_day_memory = self.data
+        self.last_pos = 0
 
     def step(self, i):
         # print(self.day)
@@ -94,6 +97,11 @@ class trajectory:
                 data=self.data, 
                 last_day_data=self.last_day_memory
             )
+            
+            trade_count = 0
+            if abs(pos - self.last_pos) > 0:
+                trade_count = 1
+            self.last_pos = pos
 
             # 生成完state与weights后向前推进一天
             self.last_day_memory = self.data
@@ -101,7 +109,7 @@ class trajectory:
             self.day += 1
             self.data = self.df.loc[self.day, :] # 获取当天数据,而不是当天之后所有数据
 
-            portfolio_return = ((self.data.close / self.last_day_memory.close) - 1) * pos
+            portfolio_return = ((self.data.close / self.last_day_memory.close) - 1) * pos - trade_count * self.transaction_cost
             
             # print("pos: ", pos, "portfolio_return: ", portfolio_return)
             

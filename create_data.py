@@ -124,7 +124,8 @@ def create_data(variant):
         "state_space": state_space,
         "stock_dim": stock_dimension,
         "tech_indicator_list": tech_features,
-        "action_space": 3 # stock_dimension [0,0,0]
+        "action_space": 3, # stock_dimension [0,0,0]
+        "transaction_cost": 0.001
     }
     env = trajectory(df=train, dataset=variant['dataset'], **env_kwargs)
 
