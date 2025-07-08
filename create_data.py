@@ -135,17 +135,15 @@ def create_data(variant):
         rews = []
         term = []
         acs = []
-        fees = []
         total_trade_count = 0
         returns_nofees= []
         while True:
             # stats ,reward,terminal,weights
-            next_state, reward, new, action,trade_flag,trade_fee,return_nofee = env.step(episode)
+            next_state, reward, new, action,trade_flag,return_nofee = env.step(episode)
             obs.append(ob)
             term.append(new)
             acs.append(action)
             rews.append(reward)
-            fees.append(trade_fee)
             returns_nofees.append(return_nofee)
             total_trade_count += trade_flag
             ob = next_state
