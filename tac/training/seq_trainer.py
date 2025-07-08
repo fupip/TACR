@@ -56,8 +56,8 @@ class SequenceTrainer(Trainer):
         Q = self.critic(states, action_one_hot)
         lmbda = self.alpha / (Q.abs().mean().detach() + 1e-6)
         bc_loss = F.cross_entropy(action_preds, action_sample.argmax(dim=-1))
-        # actor_loss = -lmbda * Q.mean() + bc_loss
-        actor_loss = bc_loss
+        actor_loss = -lmbda * Q.mean() + bc_loss
+        # actor_loss = bc_loss
         
         
 

@@ -235,9 +235,10 @@ class TransformerActor(TrajectoryModel):
         # TACR 与 CQL算法
         if not self.train_mode:
             output_states = states.detach().cpu().numpy()
-            print("output_states shape",output_states.shape)
-            print("output_states[-1]",output_states[:,-1,:])
+            print("states shape",output_states.shape)
+            print("states[-1]",output_states[:,-1,:])
             print("--------------------------------")
+        
         action_preds = self.forward(
             states, actions, rewards, timesteps, attention_mask=attention_mask, **kwargs)
         
