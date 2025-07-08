@@ -27,6 +27,7 @@ class TransformerActor(TrajectoryModel):
         super().__init__(state_dim, act_dim, max_length=max_length)
 
         self.hidden_size = hidden_size
+        self.train_mode = train_mode
         config = transformers.GPT2Config(
             vocab_size=1,  # doesn't matter -- we don't use the vocab
             n_embd=hidden_size,
