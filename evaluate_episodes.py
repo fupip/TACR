@@ -31,6 +31,7 @@ def eval_test(
     timesteps = torch.tensor(0, device=device, dtype=torch.long).reshape(1, 1)
 
     episode_return, episode_length = 0, 0
+    total_trade_count = 0
     with torch.no_grad():
         for t in range(max_ep_len):
 
@@ -60,8 +61,11 @@ def eval_test(
             if np.argmax(action) == 0:
                 action = np.array([0.0,1.0,0.0])
 
-            state, reward, done, _ = env.step(action)
+            state, reward, done, result = env.step(action)
             state = np.array(state)
+            trade_count = result.get("trade_count", 0)
+            if trade_count > 0:
+                total_trade_count += 1
 
             cur_state = torch.from_numpy(state).to(device=device).reshape(1, state_dim)
             states = torch.cat([states, cur_state], dim=0)
@@ -77,4 +81,4 @@ def eval_test(
             if done:
                 break
 
-    return episode_return, episode_length
+    return episode_return, episode_length,total_trade_count

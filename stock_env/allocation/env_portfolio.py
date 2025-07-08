@@ -245,6 +245,9 @@ class StockPortfolioEnv(gym.Env):
             
             # print("action_memory[-2]: ", self.actions_memory[-2])
             transaction_fee = self.transaction_cost * abs(new_pos - old_pos)
+            trade_count = 0 
+            if abs(new_pos - old_pos) > 0:
+                trade_count = 1
             real_fee = self.portfolio_value * transaction_fee
             self.total_fee += real_fee
             portfolio_return = ((self.data.close / last_day_memory.close) - 1) * new_pos - transaction_fee
@@ -279,7 +282,7 @@ class StockPortfolioEnv(gym.Env):
             # Equation (1), (2) : individual stocks' return * weight
             self.reward = portfolio_return
 
-        return self.state, self.reward, self.terminal, {}
+        return self.state, self.reward, self.terminal, {"trade_count": trade_count}
 
     def reset(self):
         self.asset_memory = [self.initial_amount]

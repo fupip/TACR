@@ -20,7 +20,7 @@ def eval_strategy(env, strategy, max_ep_len, state_dim=None):
     """
     state = env.reset()
     episode_return, episode_length = 0, 0
-    
+    total_trade_count = 0
     for t in range(max_ep_len):
         # 获取当前交易日的数据
         current_data = env.data
@@ -36,15 +36,18 @@ def eval_strategy(env, strategy, max_ep_len, state_dim=None):
         position, action = strategy.calculate_position_and_action(current_data, last_data)
         
         # 执行动作
-        state, reward, done, _ = env.step(action)
-        
+        state, reward, done, result = env.step(action)
+        trade_count = result.get("trade_count", 0)
+        print(f"trade count: {trade_count}")
+        if trade_count > 0:
+            total_trade_count += 1
         episode_return += reward
         episode_length += 1
         
         if done:
             break
     
-    return episode_return, episode_length
+    return episode_return, episode_length,total_trade_count
 
 def experiment(variant):
     mode = variant.get('mode', 'tacr')
@@ -137,7 +140,7 @@ def experiment(variant):
         model.load_state_dict(torch.load(group_name+'.pt'))
         print(f"load model success {group_name}.pt")
 
-        episode_return, episode_length = eval_test(
+        episode_return, episode_length,total_trade_count = eval_test(
             env,
             state_dim,
             act_dim,
@@ -149,6 +152,7 @@ def experiment(variant):
         )
         
         print(f"{mode } model return: {episode_return:.4f}, trade days: {episode_length}")
+        print(f"total trade count: {total_trade_count}")
         
     elif test_strategy == 'ma':
         # 测试均线策略
