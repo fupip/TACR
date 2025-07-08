@@ -236,7 +236,7 @@ class TransformerActor(TrajectoryModel):
         if not self.train_mode:
             output_states = states.detach().cpu().numpy()
             print("output_states shape",output_states.shape)
-            print("output_states",output_states)
+            print("output_states[-1]",output_states[:,-1,:])
             print("--------------------------------")
         action_preds = self.forward(
             states, actions, rewards, timesteps, attention_mask=attention_mask, **kwargs)
