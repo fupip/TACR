@@ -65,8 +65,8 @@ class SequenceTrainer(Trainer):
         self.optimizer.zero_grad()
         actor_loss.backward()
 
-        torch.nn.utils.clip_grad_norm_(self.critic.parameters(), .5)
-        torch.nn.utils.clip_grad_norm_(self.actor.parameters(), .5)
+        torch.nn.utils.clip_grad_norm_(self.critic.parameters(), 1.5)
+        torch.nn.utils.clip_grad_norm_(self.actor.parameters(), 1.5)
         self.optimizer.step()
 
         if self.scheduler is not None:

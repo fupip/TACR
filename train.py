@@ -77,6 +77,7 @@ def main(variant):
         n_positions=1024,                   # 支持的最大序列长度（位置编码用）
         resid_pdrop=variant['dropout'],     # 残差连接的dropout概率
         attn_pdrop=variant['dropout'],      # 注意力机制的dropout概率
+        mode=mode
     )
 
     # 计算每个轨迹的观测值、长度和回报
@@ -310,32 +311,32 @@ def main(variant):
     
     
     # Improved learning rate schedule: warmup + cosine decay
-    def lr_lambda(step):
-        if step < warmup_steps:
-            # 线性 warmup 到 base_lr
-            return float(step + 1) / float(warmup_steps)
-        progress = (step - warmup_steps) / max(1, (total_steps - warmup_steps))
-        # min_lr_frac 控制最终学习率不为0
-        min_lr_frac = min_lr / base_lr
-        cosine_decay = 0.5 * (1 + np.cos(np.pi * progress))
-        return max(min_lr_frac, cosine_decay)
+    # def lr_lambda(step):
+    #     if step < warmup_steps:
+    #         # 线性 warmup 到 base_lr
+    #         return float(step + 1) / float(warmup_steps)
+    #     progress = (step - warmup_steps) / max(1, (total_steps - warmup_steps))
+    #     # min_lr_frac 控制最终学习率不为0
+    #     min_lr_frac = min_lr / base_lr
+    #     cosine_decay = 0.5 * (1 + np.cos(np.pi * progress))
+    #     return max(min_lr_frac, cosine_decay)
     
     # scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda)
 
-    # trainer = SequenceTrainer(
-    #     model=model,
-    #     optimizer=optimizer,
-    #     batch_size=batch_size,
-    #     get_batch=get_batch,
-    #     # scheduler=scheduler,
-    #     action_dim=act_dim,
-    #     state_dim=state_dim,
-    #     state_mean=state_mean,
-    #     state_std=state_std,
-    #     alpha=variant['alpha'],
-    #     crtic_lr=variant['critic_learning_rate'],
-    #     mode=mode
-    # )
+    trainer = SequenceTrainer(
+        model=model,
+        optimizer=optimizer,
+        batch_size=batch_size,
+        get_batch=get_batch,
+        # scheduler=scheduler,
+        action_dim=act_dim,
+        state_dim=state_dim,
+        state_mean=state_mean,
+        state_std=state_std,
+        alpha=variant['alpha'],
+        crtic_lr=variant['critic_learning_rate'],
+        mode=mode
+    )
 
     if log_to_wandb:
         wandb.init(
@@ -346,20 +347,20 @@ def main(variant):
         )
         # wandb.watch(model)  # wandb has some bug
 
-    # for iter in range(variant['max_iters']):
-    #     # Get current learning rate
-    #     current_lr = optimizer.param_groups[0]['lr']
-    #     print(f'Iteration {iter + 1}: Learning Rate = {current_lr:.8f}')
+    for iter in range(variant['max_iters']):
+        # Get current learning rate
+        current_lr = optimizer.param_groups[0]['lr']
+        print(f'Iteration {iter + 1}: Learning Rate = {current_lr:.8f}')
         
-    #     outputs = trainer.train_iteration(num_steps=variant['num_steps_per_iter'], iter_num=iter + 1, print_logs=True)
+        outputs = trainer.train_iteration(num_steps=variant['num_steps_per_iter'], iter_num=iter + 1, print_logs=True)
         
-    #     # Add learning rate info to outputs
-    #     outputs['learning_rate'] = current_lr
+        # Add learning rate info to outputs
+        outputs['learning_rate'] = current_lr
         
-    #     if log_to_wandb:
-    #         wandb.log(outputs)
+        if log_to_wandb:
+            wandb.log(outputs)
 
-    # torch.save(trainer.actor.state_dict(), group_name+'.pt')
+    torch.save(trainer.actor.state_dict(), group_name+'.pt')
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
