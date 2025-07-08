@@ -45,9 +45,9 @@ class TransformerActor(TrajectoryModel):
 
         # note: we don't predict states or returns for the paper
         self.predict_state = torch.nn.Linear(hidden_size, self.state_dim)
-        self.predict_action = nn.Sequential(
-            *([nn.Linear(hidden_size, self.act_dim)] + ([nn.Softmax(dim=2)] if action_softmax else []))
-        )
+        # 移除softmax，因为交叉熵损失期望原始logits
+        self.predict_action = nn.Linear(hidden_size, self.act_dim)
+        self.use_softmax = action_softmax  # 保存配置，但不在forward中使用
         self.predict_return = torch.nn.Linear(hidden_size, 1)
         
         self.action_head_alpha = nn.Linear(hidden_size, self.act_dim)
@@ -232,6 +232,10 @@ class TransformerActor(TrajectoryModel):
         # TACR 与 CQL算法
         action_preds = self.forward(
             states, actions, rewards, timesteps, attention_mask=attention_mask, **kwargs)
+        
+        # 在推理时应用softmax获得概率分布
+        if self.use_softmax:
+            action_preds = F.softmax(action_preds, dim=-1)
         
         # 使用IQL算法
         # action_preds, log_probs, action_mean, alpha = self.forward_dist(
