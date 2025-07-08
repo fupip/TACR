@@ -5,7 +5,7 @@ import torch.nn.functional as F
 
 class SimpleNet(nn.Module):
     """
-    简单的MLP网络，用于替代GPT2Model
+    简单的MLP网络,用于替代GPT2Model
     保持与GPT2Model相同的接口
     """
     
@@ -28,7 +28,7 @@ class SimpleNet(nn.Module):
         
     def forward(self, inputs_embeds, attention_mask=None):
         """
-        前向传播，保持与GPT2Model相同的接口
+        前向传播保持与GPT2Model相同的接口
         
         Args:
             inputs_embeds: 输入嵌入 [batch_size, seq_len, hidden_size]
