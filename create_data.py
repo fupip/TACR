@@ -135,14 +135,18 @@ def create_data(variant):
         rews = []
         term = []
         acs = []
+        fees = []
         total_trade_count = 0
+        returns_nofees= []
         while True:
             # stats ,reward,terminal,weights
-            next_state, reward, new, action,trade_flag = env.step(episode)
+            next_state, reward, new, action,trade_flag,trade_fee,return_nofee = env.step(episode)
             obs.append(ob)
             term.append(new)
             acs.append(action)
             rews.append(reward)
+            fees.append(trade_fee)
+            returns_nofees.append(return_nofee)
             total_trade_count += trade_flag
             ob = next_state
 
@@ -154,17 +158,21 @@ def create_data(variant):
         rews = np.array(rews)
         term = np.array(term)
         acs = np.array(acs)
+        return_nofee_array = np.array(returns_nofees)
         
         # 使用复合增长计算总收益：new_value = initial_value * (1 + reward)
         initial_value = 1000000  # 初始投资额度（可以设置为其他值）
         total_amount = initial_value * np.prod(1 + rews)
+        nofee_amount = initial_value * np.prod(1 + return_nofee_array)
         total_reward = (total_amount - initial_value)/initial_value
+        total_real_fee = nofee_amount -total_amount
         print("rewards sum:", np.sum(rews))
         print("total_PnL:", total_amount - initial_value)
         print("total_amount",total_amount)
         
         print("total_reward",total_reward)
         print("total_trade_count",total_trade_count)
+        print("total_real_fee",total_real_fee)
         traj = {"observations": obs, "rewards": rews, "dones": term, "actions": acs}
         
         return traj,total_reward

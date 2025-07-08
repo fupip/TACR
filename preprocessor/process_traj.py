@@ -109,16 +109,19 @@ class trajectory:
             # load next state
             self.day += 1
             self.data = self.df.loc[self.day, :] # 获取当天数据,而不是当天之后所有数据
-
-            portfolio_return = ((self.data.close / self.last_day_memory.close) - 1) * pos - trade_flag * self.transaction_cost
+            trade_fee  = trade_flag * self.transaction_cost
+            portfolio_return_nofee = ((self.data.close / self.last_day_memory.close) - 1) * pos
+            
+            portfolio_return_with_fee = ((self.data.close / self.last_day_memory.close) - 1) * pos - trade_fee
             
             # print("pos: ", pos, "portfolio_return: ", portfolio_return)
             
-            self.reward = portfolio_return
+            self.reward = portfolio_return_with_fee
             
             # print(f"portfolio_return: {portfolio_return}")
         # print("state: ", self.state)
-        return self.state, self.reward, self.terminal, action, trade_flag
+        return self.state, self.reward, self.terminal, action, trade_flag,portfolio_return_nofee
+
 
     def reset(self):
         self.day = 0
