@@ -13,6 +13,7 @@ class trajectory:
             action_space,
             tech_indicator_list,
             day=0,
+            transaction_cost=0.001,
             strategy_name='moving_average',
             strategy_kwargs=None,
     ):
