@@ -163,7 +163,7 @@ def experiment(variant):
             threshold_multiplier=variant.get('ma_threshold', 0.2)
         )
         
-        episode_return, episode_length = eval_strategy(
+        episode_return, episode_length,total_trade_count = eval_strategy(
             env,
             ma_strategy,
             max_ep_len=max_ep_len,
@@ -171,7 +171,7 @@ def experiment(variant):
         )
         
         print(f"MA strategy return: {episode_return:.4f}, trade days: {episode_length}")
-        
+        print(f"total trade count: {total_trade_count}")
     elif test_strategy == 'random':
         # 测试随机策略
         print("test random strategy...")
