@@ -133,6 +133,7 @@ def experiment(variant):
             n_inner=4 * variant['embed_dim'],
             activation_function=variant['activation_function'],
             n_positions=1024,
+            train_mode=False,
             resid_pdrop=0.0, #variant['dropout'],
             attn_pdrop=0.0 #variant['dropout']
             )

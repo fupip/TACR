@@ -21,6 +21,7 @@ class TransformerActor(TrajectoryModel):
             max_length=None,
             max_ep_len=4096,
             action_softmax=True,
+            train_mode=True,
             **kwargs
     ):
         super().__init__(state_dim, act_dim, max_length=max_length)
@@ -219,7 +220,7 @@ class TransformerActor(TrajectoryModel):
                 dim=1).to(dtype=torch.float32)
             actions = torch.cat(
                 [torch.zeros((actions.shape[0], self.max_length - actions.shape[1], self.act_dim),
-                             device=actions.device), actions],
+                            device=actions.device), actions],
                 dim=1).to(dtype=torch.float32)
             rewards = torch.cat(
                 [torch.zeros((rewards.shape[0], self.max_length-rewards.shape[1], 1), device=rewards.device), rewards],
@@ -231,10 +232,11 @@ class TransformerActor(TrajectoryModel):
         else:
             attention_mask = None
         # TACR 与 CQL算法
-        output_states = states.detach().cpu().numpy()
-        print("output_states shape",output_states.shape)
-        print("output_states",output_states)
-        print("--------------------------------")
+        if not self.train_mode:
+            output_states = states.detach().cpu().numpy()
+            print("output_states shape",output_states.shape)
+            print("output_states",output_states)
+            print("--------------------------------")
         action_preds = self.forward(
             states, actions, rewards, timesteps, attention_mask=attention_mask, **kwargs)
         
