@@ -45,9 +45,20 @@ def eval_test(
                 timesteps.to(dtype=torch.long),
             )
             # print("actions[-1]",actions[-1])
-            # print("action",action)
+            # print("action",action,type(action))
+            # temp_action = action.argmax()
+            # print("action argmax",temp_action,type(temp_action))
+            
+            
+            
+            
             actions[-1] = action
             action = action.detach().cpu().numpy()
+            
+            print("action",action,type(action))
+            
+            if np.argmax(action) == 0:
+                action = np.array([0.0,1.0,0.0])
 
             state, reward, done, _ = env.step(action)
             state = np.array(state)

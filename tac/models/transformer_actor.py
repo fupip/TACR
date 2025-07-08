@@ -4,6 +4,7 @@ import torch.nn as nn
 import transformers
 from tac.models.model import TrajectoryModel
 from tac.models.trajectory_gpt2 import GPT2Model
+from tac.models.simple_net import SimpleNet
 import torch.nn.functional as F
 
 class TransformerActor(TrajectoryModel):
@@ -33,7 +34,7 @@ class TransformerActor(TrajectoryModel):
 
         # note: the only difference between this GPT2Model and the default Huggingface version
         # is that the positional embeddings are removed (since we'll add those ourselves)
-        self.transformer = GPT2Model(config)
+        self.transformer = SimpleNet(config)
 
         self.embed_timestep = nn.Embedding(max_ep_len, hidden_size)
         self.embed_return = torch.nn.Linear(1, hidden_size)
@@ -104,14 +105,14 @@ class TransformerActor(TrajectoryModel):
         x = x.reshape(batch_size, seq_length, 3, self.hidden_size).permute(0, 2, 1, 3)
 
         # get predictions
-        return_preds = self.predict_return(x[:,2])  # Predict next return given state and action (we don't use this)
-        state_preds = self.predict_state(x[:,2])    # Predict next state given state and action (we don't use this)
+        # return_preds = self.predict_return(x[:,2])  # Predict next return given state and action (we don't use this)
+        # state_preds = self.predict_state(x[:,2])    # Predict next state given state and action (we don't use this)
         action_preds = self.predict_action(x[:,1])  # Algorithm 1, line8 : Predict next action given state
         # print("action_preds.shape",action_preds.shape)
         # print("return_preds.shape",return_preds.shape)
         # print("state_preds.shape",state_preds.shape)
         # print("--------------------------------")
-        return state_preds, action_preds, return_preds
+        return  action_preds
     
     def predict_action_dist(self, h):
         # h: [batch, seq, hidden_size]
