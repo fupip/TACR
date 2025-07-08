@@ -83,7 +83,7 @@ def validate_cql_improvements():
         env_kwargs = {
             "dataset": "csi",
             "initial_amount": 1000000,
-            "transaction_cost": 0.002,
+            "transaction_cost": 0.001,
             "state_space": state_space,
             "stock_dim": stock_dimension,
             "tech_indicator_list": config.TECHNICAL_INDICATORS_LIST,
