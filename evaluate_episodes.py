@@ -51,10 +51,12 @@ def eval_test(
             # print("action argmax",temp_action,type(temp_action))
             
             
-            
-            
+            output_states = states.detach().cpu().numpy()
+            print("output_states",output_states)
+
             actions[-1] = action
             action = action.detach().cpu().numpy()
+            
             
             print("action",action,type(action))
             
