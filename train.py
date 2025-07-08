@@ -345,7 +345,7 @@ def main(variant):
             project='tac',
             config=variant
         )
-        # wandb.watch(model)  # wandb has some bug
+        wandb.watch(model, log="all", log_freq=100)
 
     for iter in range(variant['max_iters']):
         # Get current learning rate
