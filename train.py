@@ -4,6 +4,12 @@ import argparse
 import random
 import pickle
 import pandas as pd
+import warnings
+
+# 抑制PyTorch backward hook警告
+warnings.filterwarnings("ignore", message="Using a non-full backward hook*")
+warnings.filterwarnings("ignore", message="Using non-full backward hooks*")
+warnings.filterwarnings("ignore", category=UserWarning, module="torch.nn.modules.module")
 from stock_env.apps import config
 from stock_env.allocation.env_portfolio import StockPortfolioEnv
 import torch
@@ -345,7 +351,8 @@ def main(variant):
             project='tac',
             config=variant
         )
-        wandb.watch(model, log="all", log_freq=100)
+        # 修改wandb.watch参数以避免backward hook警告
+        wandb.watch(model, log="gradients", log_freq=100, log_graph=False)
 
     for iter in range(variant['max_iters']):
         # Get current learning rate
