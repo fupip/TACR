@@ -1,6 +1,6 @@
 # coding=utf-8
-# Informer模型实现
-# 基于GPT2Model结构，实现用于时间序列预测的Informer模型
+# Informer model implementation
+# Based on GPT2Model structure, implementing Informer model for time series forecasting
 
 import math
 import os
@@ -39,7 +39,7 @@ logger = logging.get_logger(__name__)
 
 
 class InformerConfig(GPT2Config):
-    """Informer模型配置类"""
+    """Informer model configuration class"""
     def __init__(
         self,
         vocab_size=50257,
@@ -55,17 +55,21 @@ class InformerConfig(GPT2Config):
         layer_norm_epsilon=1e-5,
         initializer_range=0.02,
         use_cache=True,
-        seq_len=96,  # 输入序列长度
-        label_len=48,  # 标签长度
-        pred_len=96,  # 预测长度
-        d_model=512,  # 模型维度
-        d_ff=2048,  # Feed Forward维度
-        factor=5,  # ProbSparse注意力的采样因子
+        seq_len=96,  # Input sequence length
+        label_len=48,  # Label length
+        pred_len=96,  # Prediction length
+        d_model=512,  # Model dimension
+        d_ff=2048,  # Feed Forward dimension
+        factor=5,  # ProbSparse attention sampling factor
         dropout=0.05,
-        distil=True,  # 是否使用蒸馏
-        mix=True,  # 是否在生成器中使用mix注意力
+        distil=True,  # Whether to use distillation
+        mix=True,  # Whether to use mix attention in generator
         **kwargs
     ):
+        # Ensure d_model is consistent with n_embd
+        if d_model != n_embd:
+            n_embd = d_model
+            
         super().__init__(
             vocab_size=vocab_size,
             n_positions=n_positions,
@@ -91,10 +95,27 @@ class InformerConfig(GPT2Config):
         self.dropout = dropout
         self.distil = distil
         self.mix = mix
+        
+        # Parameter validation
+        self._validate_config()
+
+    def _validate_config(self):
+        """Validate the validity of configuration parameters"""
+        if self.d_model % self.n_head != 0:
+            raise ValueError(f"d_model ({self.d_model}) must be divisible by n_head ({self.n_head})")
+        
+        if self.seq_len <= 0 or self.pred_len <= 0:
+            raise ValueError("seq_len and pred_len must be positive")
+            
+        if self.label_len >= self.seq_len:
+            raise ValueError("label_len must be less than seq_len")
+            
+        if self.factor <= 0:
+            raise ValueError("factor must be positive")
 
 
 class TriangularCausalMask:
-    """三角因果掩码"""
+    """Triangular causal mask"""
     def __init__(self, B, L, device="cpu"):
         mask_shape = [B, 1, L, L]
         with torch.no_grad():
@@ -106,12 +127,12 @@ class TriangularCausalMask:
 
 
 class ProbMask:
-    """ProbSparse注意力掩码"""
+    """ProbSparse attention mask"""
     def __init__(self, B, H, L, index, scores, device="cpu"):
-        _mask = torch.ones(L, scores.shape[-1], dtype=torch.bool).to(device).triu(1)
+        _mask = torch.ones(L, scores.shape[-1], dtype=torch.bool, device=device).triu(1)
         _mask_ex = _mask[None, None, :].expand(B, H, L, scores.shape[-1])
-        indicator = _mask_ex[torch.arange(B)[:, None, None],
-                             torch.arange(H)[None, :, None],
+        indicator = _mask_ex[torch.arange(B, device=device)[:, None, None],
+                             torch.arange(H, device=device)[None, :, None],
                              index, :].to(device)
         self._mask = indicator.view(scores.shape).to(device)
 
@@ -121,7 +142,7 @@ class ProbMask:
 
 
 class ProbAttention(nn.Module):
-    """ProbSparse注意力机制"""
+    """ProbSparse attention mechanism"""
     def __init__(self, mask_flag=True, factor=5, scale=None, attention_dropout=0.1, output_attention=False):
         super(ProbAttention, self).__init__()
         self.factor = factor
@@ -135,19 +156,19 @@ class ProbAttention(nn.Module):
         B, H, L_Q, D = Q.shape
         _, _, L_K, _ = K.shape
 
-        # 计算查询-键的稀疏性度量
+        # Calculate query-key sparsity measurement
         K_expand = K.unsqueeze(-3).expand(B, H, L_Q, L_K, D)
-        index_sample = torch.randint(L_K, (L_Q, sample_k))  # 真实的采样
-        K_sample = K_expand[:, :, torch.arange(L_Q).unsqueeze(1), index_sample, :]
+        index_sample = torch.randint(L_K, (L_Q, sample_k), device=Q.device)  # Fixed device mismatch
+        K_sample = K_expand[:, :, torch.arange(L_Q, device=Q.device).unsqueeze(1), index_sample, :]
         Q_K_sample = torch.matmul(Q.unsqueeze(-2), K_sample.transpose(-2, -1)).squeeze(-2)
 
-        # 找到Top_k个查询
+        # Find Top_k queries
         M = Q_K_sample.max(-1)[0] - torch.div(Q_K_sample.sum(-1), L_K)
         M_top = M.topk(n_top, sorted=False)[1]
 
-        # 使用稀疏性度量来进行Q的缩减
-        Q_reduce = Q[torch.arange(B)[:, None, None],
-                     torch.arange(H)[None, :, None],
+        # Use sparsity measurement to reduce Q
+        Q_reduce = Q[torch.arange(B, device=Q.device)[:, None, None],
+                     torch.arange(H, device=Q.device)[None, :, None],
                      M_top, :]  # factor*ln(L_q)
         Q_K = torch.matmul(Q_reduce, K.transpose(-2, -1))  # factor*ln(L_q)*L_k
 
@@ -159,8 +180,8 @@ class ProbAttention(nn.Module):
             # V_sum = V.sum(dim=-2)
             V_sum = V.mean(dim=-2)
             contex = V_sum.unsqueeze(-2).expand(B, H, L_Q, V_sum.shape[-1]).clone()
-        else:  # 使用掩码
-            assert(L_Q == L_V)  # 需要进行因果掩码
+        else:  # Use mask
+            assert(L_Q == L_V)  # Need causal mask
             contex = V.cumsum(dim=-2)
         return contex
 
@@ -173,19 +194,27 @@ class ProbAttention(nn.Module):
 
         attn = torch.softmax(scores, dim=-1)  # nn.Softmax(dim=-1)(scores)
 
-        context_in[torch.arange(B)[:, None, None],
-                   torch.arange(H)[None, :, None],
+        context_in[torch.arange(B, device=V.device)[:, None, None],
+                   torch.arange(H, device=V.device)[None, :, None],
                    index, :] = torch.matmul(attn, V).type_as(context_in)
         if self.output_attention:
-            attns = (torch.ones([B, H, L_V, L_V])/L_V).type_as(attn).to(attn.device)
-            attns[torch.arange(B)[:, None, None], torch.arange(H)[None, :, None], index, :] = attn
+            attns = (torch.ones([B, H, L_V, L_V], device=V.device)/L_V).type_as(attn)
+            attns[torch.arange(B, device=V.device)[:, None, None], 
+                  torch.arange(H, device=V.device)[None, :, None], index, :] = attn
             return (context_in, attns)
         else:
             return (context_in, None)
 
     def forward(self, queries, keys, values, attn_mask, tau=None, delta=None):
+        # Input validation
+        if queries.dim() != 4 or keys.dim() != 4 or values.dim() != 4:
+            raise ValueError("queries, keys, values must be 4D tensors")
+            
         B, L_Q, H, D = queries.shape
         _, L_K, _, _ = keys.shape
+
+        if L_K == 0 or L_Q == 0:
+            raise ValueError("Sequence length cannot be zero")
 
         queries = queries.transpose(2, 1)
         keys = keys.transpose(2, 1)
@@ -194,25 +223,25 @@ class ProbAttention(nn.Module):
         U_part = self.factor * np.ceil(np.log(L_K)).astype('int').item()  # c*ln(L_k)
         u = self.factor * np.ceil(np.log(L_Q)).astype('int').item()  # c*ln(L_q)
 
-        U_part = U_part if U_part < L_K else L_K
-        u = u if u < L_Q else L_Q
+        U_part = max(1, min(U_part, L_K))  # Ensure at least 1 and not exceed L_K
+        u = max(1, min(u, L_Q))  # Ensure at least 1 and not exceed L_Q
 
         scores_top, index = self._prob_QK(queries, keys, sample_k=U_part, n_top=u)
 
-        # 添加尺度因子
+        # Add scale factor
         scale = self.scale or 1. / math.sqrt(D)
         if scale is not None:
             scores_top = scores_top * scale
-        # 获得上下文
+        # Get context
         context = self._get_initial_context(values, L_Q)
-        # 更新上下文
+        # Update context
         context, attn = self._update_context(context, values, scores_top, index, L_Q, attn_mask)
 
         return context.transpose(2, 1).contiguous(), attn
 
 
 class AttentionLayer(nn.Module):
-    """注意力层"""
+    """Attention layer"""
     def __init__(self, attention, d_model, n_heads, d_keys=None, d_values=None):
         super(AttentionLayer, self).__init__()
 
@@ -249,7 +278,7 @@ class AttentionLayer(nn.Module):
 
 
 class ConvLayer(nn.Module):
-    """卷积层用于注意力蒸馏"""
+    """Convolutional layer for attention distillation"""
     def __init__(self, c_in):
         super(ConvLayer, self).__init__()
         padding = 1 if torch.__version__ >= '1.5.0' else 2
@@ -272,7 +301,7 @@ class ConvLayer(nn.Module):
 
 
 class EncoderLayer(nn.Module):
-    """编码器层"""
+    """Encoder layer"""
     def __init__(self, attention, d_model, d_ff=None, dropout=0.1, activation="relu"):
         super(EncoderLayer, self).__init__()
         d_ff = d_ff or 4 * d_model
@@ -300,7 +329,7 @@ class EncoderLayer(nn.Module):
 
 
 class Encoder(nn.Module):
-    """编码器"""
+    """Encoder"""
     def __init__(self, attn_layers, conv_layers=None, norm_layer=None):
         super(Encoder, self).__init__()
         self.attn_layers = nn.ModuleList(attn_layers)
@@ -312,11 +341,11 @@ class Encoder(nn.Module):
         attns = []
         if self.conv_layers is not None:
             for i, (attn_layer, conv_layer) in enumerate(zip(self.attn_layers, self.conv_layers)):
-                delta = delta if delta is not None else None
                 x, attn = attn_layer(x, attn_mask=attn_mask, tau=tau, delta=delta)
                 x = conv_layer(x)
                 attns.append(attn)
-            x, attn = self.attn_layers[-1](x, tau=tau, delta=delta)
+            # Last attention layer (no corresponding conv layer)
+            x, attn = self.attn_layers[-1](x, attn_mask=attn_mask, tau=tau, delta=delta)
             attns.append(attn)
         else:
             for attn_layer in self.attn_layers:
@@ -330,7 +359,7 @@ class Encoder(nn.Module):
 
 
 class DecoderLayer(nn.Module):
-    """解码器层"""
+    """Decoder layer"""
     def __init__(self, self_attention, cross_attention, d_model, d_ff=None,
                  dropout=0.1, activation="relu"):
         super(DecoderLayer, self).__init__()
@@ -349,7 +378,7 @@ class DecoderLayer(nn.Module):
         x = x + self.dropout(self.self_attention(
             x, x, x,
             attn_mask=x_mask,
-            tau=tau, delta=None
+            tau=tau, delta=delta  # Fixed parameter passing
         )[0])
         x = self.norm1(x)
 
@@ -367,7 +396,7 @@ class DecoderLayer(nn.Module):
 
 
 class Decoder(nn.Module):
-    """解码器"""
+    """Decoder"""
     def __init__(self, layers, norm_layer=None, projection=None):
         super(Decoder, self).__init__()
         self.layers = nn.ModuleList(layers)
@@ -387,7 +416,7 @@ class Decoder(nn.Module):
 
 
 class DataEmbedding(nn.Module):
-    """数据嵌入层"""
+    """Data embedding layer"""
     def __init__(self, c_in, d_model, embed_type='fixed', freq='h', dropout=0.1):
         super(DataEmbedding, self).__init__()
 
@@ -404,7 +433,7 @@ class DataEmbedding(nn.Module):
 
 
 class TokenEmbedding(nn.Module):
-    """值嵌入"""
+    """Token embedding"""
     def __init__(self, c_in, d_model):
         super(TokenEmbedding, self).__init__()
         padding = 1 if torch.__version__ >= '1.5.0' else 2
@@ -420,10 +449,10 @@ class TokenEmbedding(nn.Module):
 
 
 class PositionalEmbedding(nn.Module):
-    """位置嵌入"""
+    """Positional embedding"""
     def __init__(self, d_model, max_len=5000):
         super(PositionalEmbedding, self).__init__()
-        # 计算位置编码
+        # Calculate positional encoding
         pe = torch.zeros(max_len, d_model).float()
         pe.require_grad = False
 
@@ -442,7 +471,7 @@ class PositionalEmbedding(nn.Module):
 
 
 class TemporalEmbedding(nn.Module):
-    """时间嵌入"""
+    """Temporal embedding"""
     def __init__(self, d_model, embed_type='fixed', freq='h'):
         super(TemporalEmbedding, self).__init__()
 
@@ -473,7 +502,7 @@ class TemporalEmbedding(nn.Module):
 
 
 class TimeFeatureEmbedding(nn.Module):
-    """时间特征嵌入"""
+    """Time feature embedding"""
     def __init__(self, d_model, embed_type='timeF', freq='h'):
         super(TimeFeatureEmbedding, self).__init__()
 
@@ -487,7 +516,7 @@ class TimeFeatureEmbedding(nn.Module):
 
 
 class FixedEmbedding(nn.Module):
-    """固定嵌入"""
+    """Fixed embedding"""
     def __init__(self, c_in, d_model):
         super(FixedEmbedding, self).__init__()
 
@@ -511,7 +540,7 @@ class FixedEmbedding(nn.Module):
 @dataclass
 class InformerModelOutput(ModelOutput):
     """
-    Informer模型输出
+    Informer model output
     """
     last_hidden_state: torch.FloatTensor = None
     prediction: torch.FloatTensor = None
@@ -521,7 +550,7 @@ class InformerModelOutput(ModelOutput):
 
 class InformerPreTrainedModel(PreTrainedModel):
     """
-    Informer预训练模型抽象类
+    Informer pretrained model abstract class
     """
     config_class = InformerConfig
     base_model_prefix = "informer"
@@ -530,7 +559,7 @@ class InformerPreTrainedModel(PreTrainedModel):
         super().__init__(*inputs, **kwargs)
 
     def _init_weights(self, module):
-        """初始化权重"""
+        """Initialize weights"""
         if isinstance(module, (nn.Linear, nn.Embedding)):
             module.weight.data.normal_(mean=0.0, std=self.config.initializer_range)
             if isinstance(module, nn.Linear) and module.bias is not None:
@@ -541,23 +570,23 @@ class InformerPreTrainedModel(PreTrainedModel):
 
 
 @add_start_docstrings(
-    "基于Transformer的时间序列预测Informer模型",
+    "Transformer-based time series forecasting Informer model",
 )
 class InformerModel(InformerPreTrainedModel):
-    """Informer模型主类"""
+    """Informer model main class"""
     
     def __init__(self, config):
         super().__init__(config)
         
         self.config = config
         
-        # 数据嵌入
-        self.enc_embedding = DataEmbedding(config.n_embd, config.d_model, 
+        # Data embedding (use unified d_model)
+        self.enc_embedding = DataEmbedding(config.d_model, config.d_model, 
                                           dropout=config.dropout)
-        self.dec_embedding = DataEmbedding(config.n_embd, config.d_model,
+        self.dec_embedding = DataEmbedding(config.d_model, config.d_model,
                                           dropout=config.dropout)
         
-        # 编码器
+        # Encoder
         self.encoder = Encoder(
             [
                 EncoderLayer(
@@ -578,7 +607,7 @@ class InformerModel(InformerPreTrainedModel):
             norm_layer=torch.nn.LayerNorm(config.d_model)
         )
         
-        # 解码器  
+        # Decoder  
         self.decoder = Decoder(
             [
                 DecoderLayer(
@@ -597,10 +626,10 @@ class InformerModel(InformerPreTrainedModel):
                     dropout=config.dropout,
                     activation='gelu',
                 )
-                for _ in range(config.n_layer // 2)  # 解码器层数较少
+                for _ in range(config.n_layer // 2)  # Decoder has fewer layers
             ],
             norm_layer=torch.nn.LayerNorm(config.d_model),
-            projection=nn.Linear(config.d_model, config.n_embd, bias=True)
+            projection=nn.Linear(config.d_model, config.d_model, bias=True)
         )
         
         self.init_weights()
@@ -625,10 +654,10 @@ class InformerModel(InformerPreTrainedModel):
         )
         return_dict = return_dict if return_dict is not None else self.config.use_return_dict
 
-        # 编码器前向传播
+        # Encoder forward pass
         enc_out, attns = self.encoder(input_ids, attn_mask=enc_self_mask)
 
-        # 解码器前向传播
+        # Decoder forward pass
         dec_out = self.decoder(decoder_input_ids, enc_out, x_mask=dec_self_mask, cross_mask=dec_enc_mask)
 
         if not return_dict:
@@ -643,7 +672,7 @@ class InformerModel(InformerPreTrainedModel):
 
 
 class InformerForPrediction(InformerPreTrainedModel):
-    """用于时间序列预测的Informer模型"""
+    """Informer model for time series prediction"""
     
     def __init__(self, config):
         super().__init__(config)
@@ -661,11 +690,11 @@ class InformerForPrediction(InformerPreTrainedModel):
         dec_enc_mask=None,
         **kwargs
     ):
-        # 嵌入
+        # Embedding
         enc_out = self.informer.enc_embedding(x_enc, x_mark_enc)
         dec_out = self.informer.dec_embedding(x_dec, x_mark_dec)
         
-        # Informer前向传播
+        # Informer forward pass
         outputs = self.informer(
             input_ids=enc_out,
             decoder_input_ids=dec_out,
