@@ -24,6 +24,7 @@ class MovingAverageStrategy(BaseStrategy):
                     ]
         self.ma_types = ma_types
         self.ma_type = self.ma_types[strategy_id]
+        print(f"Current MA Type: {self.ma_type}")
 
     def calculate_position_and_action(self, data, last_day_data=None):
         """

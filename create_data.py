@@ -99,16 +99,26 @@ def create_data(variant):
     ###################Create suboptimal trajectories########################
 
     train = pd.read_csv("datasets/"+variant['dataset']+"_train.csv", index_col=[0])
+    trade = pd.read_csv("datasets/"+variant['dataset']+"_trade.csv", index_col=[0])
+    
     # 检查整个DataFrame是否有任何NaN值
     has_nan = train.isnull().any().any()
     print(f"Train dataset has NaN values: {has_nan}")
     
+    has_nan = trade.isnull().any().any()
+    print(f"Trade dataset has NaN values: {has_nan}")
     
+    # 确保训练和测试数据使用相同的标准化参数
+    # 使用完整数据集计算标准化参数，然后应用到分割后的数据
     train = train.iloc[120:].reset_index(drop=True)
+    trade = trade.iloc[120:].reset_index(drop=True)  # 同样跳过前120行
     
     # 检查整个DataFrame是否有任何NaN值
     has_nan = train.isnull().any().any()
-    print(f"Train dataset has NaN values: {has_nan}")
+    print(f"Train dataset after processing has NaN values: {has_nan}")
+    
+    has_nan = trade.isnull().any().any()
+    print(f"Trade dataset after processing has NaN values: {has_nan}")
     
     # print(train.head())
     # return
@@ -127,7 +137,12 @@ def create_data(variant):
         "action_space": 3, # stock_dimension [0,0,0]
         "transaction_cost": 0.001
     }
-    env = trajectory(df=train, dataset=variant['dataset'], **env_kwargs)
+    
+    # 创建训练环境
+    train_env = trajectory(df=train, dataset=variant['dataset'], **env_kwargs)
+    
+    # 创建测试环境
+    trade_env = trajectory(df=trade, dataset=variant['dataset'], **env_kwargs)
 
     def traj_generator(env, episode):
         ob = env.reset()
@@ -175,25 +190,56 @@ def create_data(variant):
         
         return traj,total_reward
 
-    env = trajectory(df=train, dataset=variant['dataset'], **env_kwargs)
+    # 生成训练轨迹
+    print("=" * 50)
+    print("Generating training trajectories...")
+    print("=" * 50)
     
-    paths = []
+    train_paths = []
     # for i in range(12):
-    i = 2
-    traj,total_reward = traj_generator(env, i)
+    i = 2  # 指定轨迹使用MA 策略2
+    traj,total_reward = traj_generator(train_env, i)
     if total_reward > 0.10:
         print(f"[{i}] total_reward: {total_reward}")
-        paths.append(traj)
+        train_paths.append(traj)
 
-    print(f"total paths: {len(paths)}")
+    print(f"total training paths: {len(train_paths)}")
+    
+    # 生成测试轨迹
+    print("=" * 50)
+    print("Generating testing trajectories...")
+    print("=" * 50)
+    
+    test_paths = []
+    # 使用相同的策略生成测试轨迹
+    i = 2  # 指定轨迹使用MA 策略2
+    traj,total_reward = traj_generator(trade_env, i)
+
+    print(f"[{i}] total_reward: {total_reward}")
+    test_paths.append(traj)
+
+    print(f"total testing paths: {len(test_paths)}")
+    
+    # 保存轨迹文件
     if not os.path.exists("trajectory"):
         os.makedirs("trajectory")
 
-    name = f'{"trajectory/"+variant["dataset"]+"_traj"}'
-    with open(f'{name}.pkl', 'wb') as f:
-        pickle.dump(paths, f)
+    # 保存训练轨迹
+    train_name = f'{"trajectory/"+variant["dataset"]+"_train_traj"}'
+    with open(f'{train_name}.pkl', 'wb') as f:
+        pickle.dump(train_paths, f)
+    print(f"Saved training trajectories: {train_name}.pkl")
 
-    print("Created trajectories:",len(paths))
+    # 保存测试轨迹
+    test_name = f'{"trajectory/"+variant["dataset"]+"_test_traj"}'
+    with open(f'{test_name}.pkl', 'wb') as f:
+        pickle.dump(test_paths, f)
+    print(f"Saved testing trajectories: {test_name}.pkl")
+
+    print("=" * 50)
+    print(f"Created training trajectories: {len(train_paths)}")
+    print(f"Created testing trajectories: {len(test_paths)}")
+    print("=" * 50)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

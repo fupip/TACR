@@ -210,14 +210,14 @@ if __name__ == '__main__':
     
     # 新增：测试策略选择
     parser.add_argument('--test_strategy', type=str, default='model', 
-                       choices=['model', 'ma', 'random'],
-                       help='test strategy: model(TACR model), ma(ma strategy), random(random strategy)')
+                    choices=['model', 'ma', 'random'],
+                    help='test strategy: model(TACR model), ma(ma strategy), random(random strategy)')
     
     # 均线策略参数
     parser.add_argument('--ma_strategy_id', type=int, default=1,
-                       help='ma strategy id')
+                    help='ma strategy id')
     parser.add_argument('--ma_threshold', type=float, default=0.2,
-                       help='ma strategy threshold')
+                    help='ma strategy threshold')
 
     args = parser.parse_args()
     experiment(variant=vars(args))

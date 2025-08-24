@@ -77,7 +77,7 @@ class FeatureEngineer:
         # add technical indicators using stockstats
         if self.use_technical_indicator:
             df = self.add_technical_indicator(df)
-            print("Successfully added technical indicators")
+            print(f"Successfully added technical indicators:{self.tech_indicator_list}")
 
         # add turbulence index for multiple stock
         if self.use_turbulence:
