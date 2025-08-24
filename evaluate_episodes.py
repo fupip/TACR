@@ -38,7 +38,8 @@ def eval_test(
             # add padding
             actions = torch.cat([actions, torch.zeros((1, act_dim), device=device)], dim=0)
             rewards = torch.cat([rewards, torch.zeros(1, device=device)])
-
+            # print("states",states.shape)
+            # print("states nnn",states)
             action = model.get_action(
                 states.to(dtype=torch.float32),
                 actions.to(dtype=torch.float32),

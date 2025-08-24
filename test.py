@@ -11,6 +11,8 @@ from tac.models.transformer_actor import TransformerActor
 from preprocessor.strategies.ma_strategy import MovingAverageStrategy
 from preprocessor.strategies.random_strategy import RandomStrategy
 import torch.backends.cudnn as cudnn
+from tac.models.simple_actor import SimpleTransformerActor
+
 import os
 os.environ['KMP_DUPLICATE_LIB_OK']='True'
 
@@ -53,6 +55,7 @@ def experiment(variant):
     mode = variant.get('mode', 'tacr')
     device = variant.get('device', 'cuda')
     test_strategy = variant.get('test_strategy', 'model')  # 新增：选择测试类型
+    test_set = variant.get('test_set', 'trade')
 
     env_name, dataset = variant['env'], variant['dataset']
     group_name = f'{env_name}-{dataset}-{mode}'
@@ -61,7 +64,7 @@ def experiment(variant):
     trade = pd.read_csv("datasets/" + dataset + "_trade.csv", index_col=[0])
     max_ep_len = train.index[-1]
     
-    train = train.iloc[60:].reset_index(drop=True)
+    train = train.iloc[120:].reset_index(drop=True)
     
     tech_features = ["close_60_sma_z","close_ma60_diff"]
 
@@ -91,9 +94,15 @@ def experiment(variant):
         "mode": "test",
         "turbulence_threshold": turbulence_threshold,
     }
+    
+    
 
     # 创建测试环境
-    env = StockPortfolioEnv(df=trade, **env_kwargs)
+    # -------------------------
+    if test_set == "trade":
+        env = StockPortfolioEnv(df=trade, **env_kwargs)
+    else:
+        env = StockPortfolioEnv(df=train, **env_kwargs)
 
     seed = variant['seed']
     env.seed(seed)
@@ -121,25 +130,35 @@ def experiment(variant):
         state_mean, state_std = np.mean(states, axis=0), np.std(states, axis=0) + 1e-6
 
         u = variant['u']
-
-        model = TransformerActor(
-            state_dim=state_dim,
-            act_dim=act_dim,
-            max_length=u,
-            max_ep_len=max_ep_len,
-            hidden_size=variant['embed_dim'],
-            n_layer=variant['n_layer'],
-            n_head=variant['n_head'],
-            n_inner=4 * variant['embed_dim'],
-            activation_function=variant['activation_function'],
-            n_positions=1024,
-            train_mode=False,
-            resid_pdrop=0.0, #variant['dropout'],
-            attn_pdrop=0.0 #variant['dropout']
+        
+        print("max_ep_len",max_ep_len)
+        model_type = variant.get('model_type', 'simple')
+        if model_type == "transformer":
+            model = TransformerActor(
+                state_dim=state_dim,
+                act_dim=act_dim,
+                max_length=u,
+                max_ep_len=max_ep_len,
+                hidden_size=variant['embed_dim'],
+                n_layer=variant['n_layer'],
+                n_head=variant['n_head'],
+                n_inner=4 * variant['embed_dim'],
+                activation_function=variant['activation_function'],
+                n_positions=1024,
+                train_mode=False,
+                resid_pdrop=0.0, #variant['dropout'],
+                attn_pdrop=0.0 #variant['dropout']
+                )
+        else:
+            model = SimpleTransformerActor(
+                state_dim=state_dim,
+                act_dim=act_dim,
+                hidden_size=variant['embed_dim'],
+                max_length=u
             )
 
-        model.load_state_dict(torch.load(group_name+'.pt'))
-        print(f"load model success {group_name}.pt")
+        model.load_state_dict(torch.load(group_name+f'-{model_type}.pt'))
+        print(f"load model success {group_name}-{model_type}.pt")
 
         episode_return, episode_length,total_trade_count = eval_test(
             env,
@@ -207,6 +226,8 @@ if __name__ == '__main__':
     parser.add_argument('--activation_function', type=str, default='relu')
     parser.add_argument('--device', type=str, default='cuda')
     parser.add_argument('--mode', type=str, default='tacr')
+    parser.add_argument('--model_type', type=str, default='simple')
+    parser.add_argument('--test_set', type=str, default='trade')
     
     # 新增：测试策略选择
     parser.add_argument('--test_strategy', type=str, default='model', 

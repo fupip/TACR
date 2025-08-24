@@ -110,8 +110,8 @@ def create_data(variant):
     
     # 确保训练和测试数据使用相同的标准化参数
     # 使用完整数据集计算标准化参数，然后应用到分割后的数据
-    train = train.iloc[120:].reset_index(drop=True)
-    trade = trade.iloc[120:].reset_index(drop=True)  # 同样跳过前120行
+    train = train.iloc[120:].reset_index(drop=True)  # 跳过前120行
+    # trade = trade.iloc[120:].reset_index(drop=True)  # test部分无需跳过
     
     # 检查整个DataFrame是否有任何NaN值
     has_nan = train.isnull().any().any()
@@ -154,13 +154,13 @@ def create_data(variant):
         returns_nofees= []
         while True:
             # stats ,reward,terminal,weights
-            next_state, reward, new, action,trade_flag,return_nofee = env.step(episode)
+            next_state, reward, new, action,trade_count,return_nofee = env.step(episode)
             obs.append(ob)
             term.append(new)
             acs.append(action)
             rews.append(reward)
             returns_nofees.append(return_nofee)
-            total_trade_count += trade_flag
+            total_trade_count += trade_count
             ob = next_state
 
             if new:

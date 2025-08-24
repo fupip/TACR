@@ -16,6 +16,7 @@ import torch
 from tac.models.transformer_actor import TransformerActor
 from tac.training.seq_trainer import SequenceTrainer
 import torch.backends.cudnn as cudnn
+from tac.models.simple_actor import SimpleTransformerActor
 
 def main(variant):
     mode = variant.get('mode', 'tacr')
@@ -44,7 +45,7 @@ def main(variant):
     env_kwargs = {
         "dataset": dataset,
         "initial_amount": 1000000,
-        "transaction_cost": 0.005,
+        "transaction_cost": 0.002,
         "state_space": state_space,
         "stock_dim": stock_dimension,
         "tech_indicator_list": tech_features,
@@ -69,22 +70,34 @@ def main(variant):
 
     # Algorithm 1, line3 : Set the length of the sequence u
     u = variant['u']
-
-    model = TransformerActor(
-        state_dim=state_dim,                # 状态空间的维度（输入特征数）  360
-        act_dim=act_dim,                    # 动作空间的维度（比如股票数量（每只股票的分配比例）
-        max_length=u,                       # 输入序列的最大长度 默认20
-        max_ep_len=max_ep_len,              # 一个episode的最大长度（用于时间步embedding等）训练数据条数
-        hidden_size=variant['embed_dim'],   # Transformer每层的隐藏单元数（embedding维度）默认128
-        n_layer=variant['n_layer'],         # Transformer的层数 默认5
-        n_head=variant['n_head'],           # 多头自注意力的头数 默认1
-        n_inner=4 * variant['embed_dim'],   # 前馈网络的隐藏层大小（一般是embedding的4倍）
-        activation_function=variant['activation_function'], # 激活函数 默认relu
-        n_positions=1024,                   # 支持的最大序列长度（位置编码用）
-        resid_pdrop=variant['dropout'],     # 残差连接的dropout概率
-        attn_pdrop=variant['dropout'],      # 注意力机制的dropout概率
-        mode=mode
-    )
+    
+    model_type =  variant.get('model_type', 'simple')
+    
+    if model_type != "simple":
+        
+        model = TransformerActor(
+            state_dim=state_dim,                # 状态空间的维度（输入特征数）  360
+            act_dim=act_dim,                    # 动作空间的维度（比如股票数量（每只股票的分配比例）
+            max_length=u,                       # 输入序列的最大长度 默认20
+            max_ep_len=max_ep_len,              # 一个episode的最大长度（用于时间步embedding等）训练数据条数
+            hidden_size=variant['embed_dim'],   # Transformer每层的隐藏单元数（embedding维度）默认128
+            n_layer=variant['n_layer'],         # Transformer的层数 默认5
+            n_head=variant['n_head'],           # 多头自注意力的头数 默认1
+            n_inner=4 * variant['embed_dim'],   # 前馈网络的隐藏层大小（一般是embedding的4倍）
+            activation_function=variant['activation_function'], # 激活函数 默认relu
+            n_positions=1024,                   # 支持的最大序列长度（位置编码用）
+            resid_pdrop=variant['dropout'],     # 残差连接的dropout概率
+            attn_pdrop=variant['dropout'],      # 注意力机制的dropout概率
+            mode=mode
+        )
+    else:
+        model = SimpleTransformerActor(
+            state_dim=state_dim,
+            act_dim=act_dim,
+            hidden_size=variant['embed_dim'],
+            max_length=u
+        )
+    
 
     # 计算每个轨迹的观测值、长度和回报
     states, traj_lens, returns = [], [], []
@@ -367,7 +380,7 @@ def main(variant):
         if log_to_wandb:
             wandb.log(outputs)
 
-    torch.save(trainer.actor.state_dict(), group_name+'.pt')
+    torch.save(trainer.actor.state_dict(), group_name+"-"+model_type+".pt")
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -393,7 +406,7 @@ if __name__ == '__main__':
     parser.add_argument('--log_to_wandb', '-w', type=bool, default=False)
     parser.add_argument('--mode', type=str, default='tacr')
     parser.add_argument('--load_model', type=str, default=None, help='load model from path')
-
+    parser.add_argument('--model_type', type=str, default='simple')
     args = parser.parse_args()
     print(args)
     main(vars(args))

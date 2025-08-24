@@ -99,9 +99,10 @@ class trajectory:
                 last_day_data=self.last_day_memory
             )
             
-            trade_flag = 0
+            trade_flag = abs(pos - self.last_pos)
+            trade_count = 0 
             if abs(pos - self.last_pos) > 0:
-                trade_flag = 1
+                trade_count = 1
             self.last_pos = pos
 
             # 生成完state与weights后向前推进一天
@@ -120,7 +121,7 @@ class trajectory:
             
             # print(f"portfolio_return: {portfolio_return}")
         # print("state: ", self.state)
-        return self.state, self.reward, self.terminal, action, trade_flag,portfolio_return_nofee
+        return self.state, self.reward, self.terminal, action, trade_count,portfolio_return_nofee
 
 
     def reset(self):
