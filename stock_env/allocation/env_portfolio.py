@@ -140,8 +140,8 @@ class StockPortfolioEnv(gym.Env):
             print("=================================")
             print(f"begin_total_asset: {self.asset_memory[0]:.2f}")
             print(f"end_total_asset  : {self.portfolio_value:.2f}")
-            print(f"total fee        : {self.total_fee:.2f}")
             print(f"total return     : {self.portfolio_value - self.asset_memory[0]:.2f}")
+            print(f"total fee        : {self.total_fee:.2f}")
 
             df_daily_return = pd.DataFrame(self.portfolio_return_memory)
             df_daily_return.columns = ["daily_return"]

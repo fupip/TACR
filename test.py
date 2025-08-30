@@ -217,7 +217,7 @@ if __name__ == '__main__':
     parser.add_argument('--dataset', type=str, default='csi')  # kdd, hightech, dow,  ndx, mdax, csi
     parser.add_argument('--env', type=str, default='stock')
     parser.add_argument('--seed', type=int, default=0)
-    parser.add_argument('--u', type=int, default=60)
+    parser.add_argument('--u', type=int, default=10)
     parser.add_argument('--pct_traj', type=float, default=1.)
     parser.add_argument('--embed_dim', type=int, default=128)
     parser.add_argument('--n_layer', type=int, default=5)

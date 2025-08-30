@@ -38,6 +38,7 @@ class SimpleNet(nn.Module):
             dict: 包含'last_hidden_state'的字典
         """
         batch_size, seq_len, hidden_size = inputs_embeds.shape
+        print("simple net forward: inputs_embeds",inputs_embeds,inputs_embeds.shape)
         
         # 应用attention mask
         if attention_mask is not None:

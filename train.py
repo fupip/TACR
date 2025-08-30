@@ -307,7 +307,7 @@ def main(variant):
             print(f"load model failed: {e}, train from scratch")
     
     warmup_steps = variant['warmup_steps']
-    total_steps = variant['max_iters'] * variant['num_steps_per_iter']  # 总训练步数
+    total_steps = variant['epochs'] * variant['num_steps_per_iter']  # 总训练步数
     
     base_lr = variant['learning_rate']
     min_lr = 1e-6
@@ -366,8 +366,9 @@ def main(variant):
         )
         # 修改wandb.watch参数以避免backward hook警告
         wandb.watch(model, log="gradients", log_freq=100, log_graph=False)
-
-    for iter in range(variant['max_iters']):
+    # ------------------------------------------------------------
+    epochs = variant['epochs']
+    for iter in range(epochs):
         # Get current learning rate
         current_lr = optimizer.param_groups[0]['lr']
         print(f'Iteration {iter + 1}: Learning Rate = {current_lr:.8f}')
@@ -400,7 +401,7 @@ if __name__ == '__main__':
     parser.add_argument('--critic_learning_rate', type=float, default=1e-5) # 1e-4 (hightech), 1e-6 (others)
     parser.add_argument('--weight_decay', '-wd', type=float, default=1e-4)
     parser.add_argument('--warmup_steps', type=int, default=10000)
-    parser.add_argument('--max_iters', type=int, default=10)
+    parser.add_argument('--epochs', '-e',type=int, default=10)
     parser.add_argument('--num_steps_per_iter', type=int, default=1000)
     parser.add_argument('--device', type=str, default='cuda')
     parser.add_argument('--log_to_wandb', '-w', type=bool, default=False)

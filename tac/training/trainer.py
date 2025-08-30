@@ -89,7 +89,10 @@ class Trainer:
         if adv_mean is not None:
             logs['adv_mean'] = np.mean(adv_mean)
         if value_loss is not None:
-            logs['value_loss'] = np.mean(value_losses)
+            if self.mode == 'iql':
+                logs['value_loss'] = np.mean(value_losses)
+            else:
+                logs['lambda'] = np.mean(value_losses)
         # 新增：CQL相关日志
         if cql_alphas:
             logs['cql_alpha'] = np.mean(cql_alphas)

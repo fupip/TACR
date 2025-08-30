@@ -73,10 +73,11 @@ def create_data(variant):
     bar_data['low_z'] = (bar_data['low'] - close_mean)/close_std
     bar_data['close_z'] = (bar_data['close'] - close_mean)/close_std
     bar_data['close_60_sma_z'] = (bar_data['close_60_sma'] - close_mean)/close_std
+    bar_data['close_20_sma_z'] = (bar_data['close_20_sma'] - close_mean)/close_std
     
     print(bar_data.head())
     
-    tech_features = ["close_60_sma_z","close_ma60_diff"]
+    tech_features = ["close_20_sma_z","close_60_sma_z","close_ma60_diff"]
 
     # Split train and test datasets
     if variant['dataset'] == "dow":
@@ -87,7 +88,7 @@ def create_data(variant):
         trade = data_split(bar_data, '2012-11-16','2013-11-21')
     else:
         train = data_split(bar_data, '2011-01-01','2024-05-18') # 3189 - 3678  15.3%
-        trade = data_split(bar_data, '2024-05-19','2025-05-28') # 3690 - 3836   3.9%
+        trade = data_split(bar_data, '2024-05-19','2025-08-26') # 3690 - 4452   19.6%
 
     if not os.path.exists("datasets"):
         os.makedirs("datasets")
@@ -197,11 +198,24 @@ def create_data(variant):
     
     train_paths = []
     # for i in range(12):
+    # MA策略生成轨迹
     i = 2  # 指定轨迹使用MA 策略2
     traj,total_reward = traj_generator(train_env, i)
     if total_reward > 0.10:
         print(f"[{i}] total_reward: {total_reward}")
         train_paths.append(traj)
+    
+    # Huric策略生成轨迹
+    huric_train_env = trajectory(df=train, dataset=variant['dataset'], strategy_name='huric', **env_kwargs)
+    huric_i = 0  # HURIC 策略强度/配置索引
+    huric_traj, huric_total_reward = traj_generator(huric_train_env, huric_i)
+
+    print(f"[HURIC {huric_i}] total_reward: {huric_total_reward}")
+    train_paths.append(huric_traj)
+    
+    
+    
+    
 
     print(f"total training paths: {len(train_paths)}")
     
@@ -212,11 +226,19 @@ def create_data(variant):
     
     test_paths = []
     # 使用相同的策略生成测试轨迹
+    # MA策略生成轨迹
     i = 2  # 指定轨迹使用MA 策略2
     traj,total_reward = traj_generator(trade_env, i)
 
     print(f"[{i}] total_reward: {total_reward}")
     test_paths.append(traj)
+
+    # Huric策略生成测试轨迹
+    huric_test_env = trajectory(df=trade, dataset=variant['dataset'], strategy_name='huric', **env_kwargs)
+    huric_i = 0  # HURIC 策略强度/配置索引
+    huric_traj, huric_total_reward = traj_generator(huric_test_env, huric_i)
+    print(f"[HURIC {huric_i}] total_reward: {huric_total_reward}")
+    test_paths.append(huric_traj)
 
     print(f"total testing paths: {len(test_paths)}")
     

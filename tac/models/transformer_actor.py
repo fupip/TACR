@@ -211,6 +211,8 @@ class TransformerActor(TrajectoryModel):
             actions = actions[:,-self.max_length:]
             rewards = rewards[:,-self.max_length:]
             timesteps = timesteps[:,-self.max_length:]
+            
+            # print("transformer actor get_action: states",states,states.shape)
 
             # pad all tokens to sequence length
             attention_mask = torch.cat([torch.zeros(self.max_length-states.shape[1]), torch.ones(states.shape[1])])
@@ -256,7 +258,12 @@ class TransformerActor(TrajectoryModel):
         # print("alpha mean",alpha.mean().item(),"min",alpha.min().item(),"max",alpha.max().item())
 
         result = action_preds[0,-1]
-        # print("result: ", result)
+        
+        # 验证输出是否为有效概率分布
+        # if self.use_softmax:
+        #     print(f"TransformerActor - Action output: {result.detach().cpu().numpy()}, sum: {result.sum().item():.6f}")
+        # else:
+        #     print(f"TransformerActor - Raw logits: {result.detach().cpu().numpy()}")
         
         argmax = torch.argmax(action_preds, dim=-1)
         # print("argmax: ", argmax)

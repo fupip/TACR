@@ -11,7 +11,7 @@
 # ]
 
 TECHNICAL_INDICATORS_LIST = [
-    "close_60_sma"
+    "close_20_sma","close_60_sma"
 ]
 
 ########################################################

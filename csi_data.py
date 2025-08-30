@@ -131,7 +131,7 @@ if __name__ == "__main__":
     
     bs.login()
     for stock_code in stock_list:
-        save_stock_data(stock_code,start_date="2011-01-01",end_date="2025-05-28")
+        save_stock_data(stock_code,start_date="2011-01-01",end_date="2025-08-26")
         
     bs.logout()
     

@@ -7,6 +7,7 @@ from .base_strategy import BaseStrategy
 from .ma_strategy import MovingAverageStrategy
 from .momentum_strategy import MomentumStrategy
 from .random_strategy import RandomStrategy
+from .huric_straegy import HuricStrategy
 
 
 # Strategy factory function for easy strategy creation
@@ -25,7 +26,8 @@ def create_strategy(strategy_name, strategy_id=0, **kwargs):
     strategies = {
         'moving_average': MovingAverageStrategy,
         'momentum': MomentumStrategy,
-        'random': RandomStrategy
+        'random': RandomStrategy,
+        'huric': HuricStrategy,
     }
     
     if strategy_name not in strategies:
@@ -40,5 +42,6 @@ __all__ = [
     'MovingAverageStrategy', 
     'MomentumStrategy',
     'RandomStrategy',
+    'HuricStrategy',
     'create_strategy'
-] 
+]
