@@ -24,6 +24,7 @@ import torch.nn as nn
 from torch.nn import CrossEntropyLoss, MSELoss
 
 from transformers.activations import ACT2FN
+
 from transformers.file_utils import (
     ModelOutput,
     add_code_sample_docstrings,
@@ -34,13 +35,78 @@ from transformers.file_utils import (
 from transformers.modeling_outputs import (
     BaseModelOutputWithPastAndCrossAttentions,
 )
-from transformers.modeling_utils import (
-    Conv1D,
-    PreTrainedModel,
-    SequenceSummary,
-    find_pruneable_heads_and_indices,
-    prune_conv1d_layer,
-)
+# ---- HF transformers compatibility shims ----
+# PreTrainedModel: 优先官方入口，其次旧路径
+try:
+    from transformers import PreTrainedModel  # 新推荐
+except Exception:
+    from transformers.modeling_utils import PreTrainedModel  # 旧版本
+
+# SequenceSummary: 多路径回退，最后自带一个极简实现
+try:
+    from transformers.modeling_utils import SequenceSummary  # 旧路径
+except Exception:
+    try:
+        # 有些版本在BERT/XLM等模型文件里定义了它
+        from transformers.models.bert.modeling_bert import SequenceSummary  # 备选
+    except Exception:
+        class SequenceSummary(nn.Module):
+            """
+            Minimal drop-in replacement that supports common 'summary_type' modes:
+            'cls', 'last', 'first', 'mean'. Default: 'cls'.
+            """
+            def __init__(self, config):
+                super().__init__()
+                self.summary_type = getattr(config, "summary_type", "cls")
+                hidden_size = getattr(config, "hidden_size", None) or getattr(config, "n_embd", None)
+                if hidden_size is None:
+                    raise ValueError("Cannot infer hidden_size for SequenceSummary shim.")
+                self.summary = nn.Identity()
+                # 可选：仿HF实现，添加 dropout/activation/projection
+                proj_size = getattr(config, "summary_proj_to_labels", None)
+                if proj_size:
+                    self.summary = nn.Linear(hidden_size, proj_size)
+                self.activation = nn.Identity()
+
+            def forward(self, hidden_states, cls_index=None, attention_mask=None, **kwargs):
+                # hidden_states: [B, T, H]
+                if self.summary_type in ("cls", "first"):
+                    output = hidden_states[:, 0]
+                elif self.summary_type == "last":
+                    output = hidden_states[:, -1]
+                elif self.summary_type == "mean":
+                    if attention_mask is not None:
+                        mask = attention_mask.unsqueeze(-1).to(hidden_states.dtype)
+                        output = (hidden_states * mask).sum(dim=1) / mask.sum(dim=1).clamp(min=1e-6)
+                    else:
+                        output = hidden_states.mean(dim=1)
+                else:
+                    output = hidden_states[:, 0]
+                return self.activation(self.summary(output))
+
+# Conv1D: 多路径回退，最后提供等价线性映射
+try:
+    from transformers.pytorch_utils import Conv1D  # 新位置（常见于较新版本）
+except Exception:
+    try:
+        from transformers.models.gpt2.modeling_gpt2 import Conv1D  # 另一常见位置
+    except Exception:
+        class Conv1D(nn.Module):
+            """GPT-2风格的Conv1D，本质是 Linear(nx -> nf)，权重shape为(nx, nf)。"""
+            def __init__(self, nf, nx):
+                super().__init__()
+                self.weight = nn.Parameter(torch.empty(nx, nf))
+                self.bias = nn.Parameter(torch.zeros(nf))
+                nn.init.normal_(self.weight, std=0.02)
+
+            def forward(self, x):
+                # x: [..., nx] -> [..., nf]
+                size_out = x.size()[:-1] + (self.bias.size(0),)
+                x = torch.addmm(self.bias, x.view(-1, x.size(-1)), self.weight).view(size_out)
+                return x
+# ---- end shims ----
+
+
 from transformers.utils import logging
 from transformers.utils.model_parallel_utils import assert_device_map, get_device_map
 from transformers.models.gpt2.configuration_gpt2 import GPT2Config
@@ -583,12 +649,12 @@ class GPT2Model(GPT2PreTrainedModel):
             self.h[layer].attn.prune_heads(heads)
 
     @add_start_docstrings_to_model_forward(GPT2_INPUTS_DOCSTRING)
-    @add_code_sample_docstrings(
-        tokenizer_class=_TOKENIZER_FOR_DOC,
-        checkpoint="gpt2",
-        output_type=BaseModelOutputWithPastAndCrossAttentions,
-        config_class=_CONFIG_FOR_DOC,
-    )
+    # @add_code_sample_docstrings(
+    #     tokenizer_class=_TOKENIZER_FOR_DOC,
+    #     checkpoint="gpt2",
+    #     output_type=BaseModelOutputWithPastAndCrossAttentions,
+    #     config_class=_CONFIG_FOR_DOC,
+    # )
     def forward(
             self,
             input_ids=None,

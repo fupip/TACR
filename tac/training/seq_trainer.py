@@ -35,6 +35,7 @@ class SequenceTrainer(Trainer):
 
         # Algorithm 1, line9, line10
         # Compute the target Q value
+        # self.critic_target.to_device("mps")
         target_Q = self.critic_target(next_state, next_action_one_hot)
         target_Q = rewards + (1 - dones) * self.discount * target_Q
         target_Q = target_Q.detach()
@@ -51,7 +52,7 @@ class SequenceTrainer(Trainer):
         self.critic_optimizer.step()
 
         action_argmax = action_preds.argmax(dim=1)
-        action_one_hot = torch.eye(action_dim).to(action_preds.device)[action_argmax]
+        action_one_hot = torch.eye(action_dim, device=action_preds.device)[action_argmax]
         # Algorithm 1, line11, line12 : Set lambda and Compute actor loss
         Q = self.critic(states, action_one_hot)
         lmbda = self.alpha / (Q.abs().mean().detach() + 1e-6)

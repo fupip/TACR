@@ -19,8 +19,18 @@ import torch.backends.cudnn as cudnn
 from tac.models.simple_actor import SimpleTransformerActor
 
 def main(variant):
+
+    if torch.backends.mps.is_available():
+        torch.set_default_dtype(torch.float32)        # 新建浮点 tensor 默认 float32
+        # 可选：提升 matmul 性能（不影响正确性）
+        try:
+            torch.backends.mps.matmul.allow_tf32 = True
+        except Exception:
+            print("mps matmul allow tf32 failed")
+            pass
+
     mode = variant.get('mode', 'tacr')
-    device = variant.get('device', 'cuda')
+    device = variant.get('device', 'mps')
     log_to_wandb = variant.get('log_to_wandb', False)
 
     env_name, dataset = variant['env'], variant['dataset']
@@ -33,7 +43,7 @@ def main(variant):
     tech_features = ["close_60_sma_z","close_ma60_diff"]
 
     # Load suboptimal trajectories
-    dataset_path = f'{"trajectory/" + variant["dataset"] + "_traj.pkl"}'
+    dataset_path = f'{"trajectory/" + variant["dataset"] + "_train_traj.pkl"}'
     with open(dataset_path, 'rb') as f:
         trajectories = pickle.load(f)
     state_space=trajectories[0]['observations'].shape[1]  #obs 即 历史state的集合 shape[1]累计的条数,shape[1]指指标的种类
@@ -58,11 +68,11 @@ def main(variant):
     env.seed(seed)
     env.action_space.seed(seed)
     torch.manual_seed(seed)
-    torch.cuda.manual_seed(seed)
-    torch.cuda.manual_seed_all(seed)
+    # torch.cuda.manual_seed(seed)
+    # torch.cuda.manual_seed_all(seed)
     np.random.seed(seed)
-    cudnn.benchmark = False
-    cudnn.deterministic = True
+    # cudnn.benchmark = False
+    # cudnn.deterministic = True
     random.seed(seed)
 
     state_dim = env.observation_space.shape[0]
@@ -224,7 +234,7 @@ def main(variant):
         next_r = torch.from_numpy(np.concatenate(next_r, axis=0)).to(dtype=torch.float32, device=device)
         timesteps = torch.from_numpy(np.concatenate(timesteps, axis=0)).to(dtype=torch.long, device=device)
         n_timesteps = torch.from_numpy(np.concatenate(n_timesteps, axis=0)).to(dtype=torch.long, device=device)
-        mask = torch.from_numpy(np.concatenate(mask, axis=0)).to(device=device)
+        mask = torch.from_numpy(np.concatenate(mask, axis=0).astype(np.float32, copy=False)).to(device=device)
 
         return s, a, r, dd, next_s, next_a, next_r, timesteps, n_timesteps, mask
     # 返回 state ,action reward,dones
@@ -354,7 +364,8 @@ def main(variant):
         state_std=state_std,
         alpha=variant['alpha'],
         crtic_lr=variant['critic_learning_rate'],
-        mode=mode
+        mode=mode,
+        device=device  # 传递设备参数
     )
 
     if log_to_wandb:
@@ -401,9 +412,9 @@ if __name__ == '__main__':
     parser.add_argument('--critic_learning_rate', type=float, default=1e-5) # 1e-4 (hightech), 1e-6 (others)
     parser.add_argument('--weight_decay', '-wd', type=float, default=1e-4)
     parser.add_argument('--warmup_steps', type=int, default=10000)
-    parser.add_argument('--epochs', '-e',type=int, default=10)
+    parser.add_argument('--epochs', '-e',type=int, default=1)
     parser.add_argument('--num_steps_per_iter', type=int, default=1000)
-    parser.add_argument('--device', type=str, default='cuda')
+    parser.add_argument('--device', type=str, default='mps')
     parser.add_argument('--log_to_wandb', '-w', type=bool, default=False)
     parser.add_argument('--mode', type=str, default='tacr')
     parser.add_argument('--load_model', type=str, default=None, help='load model from path')

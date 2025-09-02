@@ -1,10 +1,9 @@
-import gym
+import gymnasium as gym
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from gym import spaces
-from gym.utils import seeding
+from gymnasium import spaces
 import os
 import torch
 
@@ -80,9 +79,6 @@ class StockPortfolioEnv(gym.Env):
         # action_space normalization and shape is self.stock_dim
         self.action_space = spaces.Box(low=0, high=1, shape=(self.action_space,))
 
-        self.observation_space = spaces.Box(
-            low=-np.inf, high=np.inf, shape=(self.state_space,)
-        )
         # load data from a pandas dataframe
         self.data = self.df.loc[self.day, :]
 
@@ -94,6 +90,8 @@ class StockPortfolioEnv(gym.Env):
                     + self.data.close.values.tolist()
             )
         else:
+            # 为了与轨迹数据保持一致，添加一个额外的特征
+            # 这可能是历史数据的某种统计信息
             self.state = [
                 self.data.open_z,
                 self.data.high_z,
@@ -102,7 +100,7 @@ class StockPortfolioEnv(gym.Env):
                 ] + [
                     self.data[tech]
                     for tech in self.tech_indicator_list
-                ]
+                ] + [0.0]  # 添加一个占位符特征以匹配轨迹数据的维度
 
         self.terminal = False
         self.turbulence_threshold = turbulence_threshold
@@ -117,6 +115,12 @@ class StockPortfolioEnv(gym.Env):
         self.portfolio_return_memory = [0]
         self.actions_memory = [np.array([0.0, 1.0, 0.0])]
         self.date_memory = [self.data.date]
+        
+        # 确保观察空间与实际状态维度匹配
+        actual_state_dim = len(self.state)
+        self.observation_space = spaces.Box(
+            low=-np.inf, high=np.inf, shape=(actual_state_dim,)
+        )
 
     def step(self, actions):
         # print(self.day)
@@ -238,7 +242,7 @@ class StockPortfolioEnv(gym.Env):
                     ] + [
                         self.data[tech]
                         for tech in self.tech_indicator_list
-                    ]
+                    ] + [0.0]  # 添加占位符特征以匹配轨迹数据
             # print(self.state)
             # calcualte portfolio return
             # Equation (19) : Portfolio value
@@ -306,7 +310,7 @@ class StockPortfolioEnv(gym.Env):
                 ] + [
                     self.data[tech]
                     for tech in self.tech_indicator_list
-                ]
+                ] + [0.0]  # 添加占位符特征以匹配轨迹数据
 
 
         self.portfolio_value = self.initial_amount
@@ -349,6 +353,6 @@ class StockPortfolioEnv(gym.Env):
         df_asset.index = df_date.date
         return df_asset
 
-    def _seed(self, seed=None):
-        self.np_random, seed = seeding.np_random(seed)
+    def seed(self, seed=None):
+        self.np_random = np.random.RandomState(seed)
         return [seed]

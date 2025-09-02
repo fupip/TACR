@@ -42,10 +42,10 @@ class SimpleTransformerActor(nn.Module):
         if attention_mask is None:
             attention_mask = torch.ones((batch_size, seq_length), dtype=torch.long, device=states.device)
         
-        print("simple actor forward: states",states,states.shape)
-        print("simple actor forward: actions",actions,actions.shape)
-        print("simple actor forward: rewards",rewards,rewards.shape)
-        print("simple actor forward: timesteps",timesteps,timesteps.shape)
+        # print("simple actor forward: states",states,states.shape)
+        # print("simple actor forward: actions",actions,actions.shape)
+        # print("simple actor forward: rewards",rewards,rewards.shape)
+        # print("simple actor forward: timesteps",timesteps,timesteps.shape)
         
         # 嵌入各个模态
         state_embeddings = self.embed_state(states)

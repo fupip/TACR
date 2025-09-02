@@ -10,7 +10,7 @@ def eval_test(
         max_ep_len=512,
         state_mean=0.,
         state_std=1.,
-        device='cuda',
+        device='cpu',
     ):
 
     model.eval()
@@ -21,10 +21,16 @@ def eval_test(
 
     state = env.reset()
     state = np.array(state)
+    
+    # 添加调试信息
+    print(f"Debug: state shape: {state.shape}, state_dim: {state_dim}")
+    print(f"Debug: state content: {state}")
 
     # we keep all the histories on the device
     # note that the latest action and reward will be "padding"
-    states = torch.from_numpy(state).reshape(1, state_dim).to(device=device, dtype=torch.float32)
+    # 使用实际的状态大小而不是预定义的state_dim
+    actual_state_dim = state.shape[0]
+    states = torch.from_numpy(state).reshape(1, actual_state_dim).to(device=device, dtype=torch.float32)
     actions = torch.zeros((0, act_dim), device=device, dtype=torch.float32)
     rewards = torch.zeros(0, device=device, dtype=torch.float32)
 
@@ -114,7 +120,7 @@ def eval_test(
             if trade_count > 0:
                 total_trade_count += 1
 
-            cur_state = torch.from_numpy(state).to(device=device).reshape(1, state_dim)
+            cur_state = torch.from_numpy(state).to(device=device, dtype=torch.float32).reshape(1, actual_state_dim)
             states = torch.cat([states, cur_state], dim=0)
             rewards[-1] = reward
 

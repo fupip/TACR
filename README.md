@@ -75,7 +75,7 @@ conda activate stock
 pip install torch torchvision torchaudio
 pip install pandas numpy matplotlib scikit-learn
 pip install transformers tqdm wandb
-pip install gym stockstats yfinance
+pip install gymnasium stockstats yfinance
 ```
 
 ## 🎯 快速开始

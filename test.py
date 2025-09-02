@@ -10,7 +10,7 @@ from evaluate_episodes import eval_test
 from tac.models.transformer_actor import TransformerActor
 from preprocessor.strategies.ma_strategy import MovingAverageStrategy
 from preprocessor.strategies.random_strategy import RandomStrategy
-import torch.backends.cudnn as cudnn
+# import torch.backends.cudnn as cudnn  # 注释掉CUDA相关导入
 from tac.models.simple_actor import SimpleTransformerActor
 
 import os
@@ -53,7 +53,7 @@ def eval_strategy(env, strategy, max_ep_len, state_dim=None):
 
 def experiment(variant):
     mode = variant.get('mode', 'tacr')
-    device = variant.get('device', 'cuda')
+    device = variant.get('device', 'mps')
     test_strategy = variant.get('test_strategy', 'model')  # 新增：选择测试类型
     test_set = variant.get('test_set', 'trade')
 
@@ -70,7 +70,7 @@ def experiment(variant):
 
     # 对于策略测试，可能不需要轨迹数据
     if test_strategy == 'model':
-        dataset_path = f'{"trajectory/" + variant["dataset"] + "_traj.pkl"}'
+        dataset_path = f'{"trajectory/" + variant["dataset"] + "_test_traj.pkl"}'
         with open(dataset_path, 'rb') as f:
             trajectories = pickle.load(f)
         state_space = trajectories[0]['observations'].shape[1]
@@ -108,11 +108,11 @@ def experiment(variant):
     env.seed(seed)
     env.action_space.seed(seed)
     torch.manual_seed(seed)
-    torch.cuda.manual_seed(seed)
-    torch.cuda.manual_seed_all(seed)
+    # torch.cuda.manual_seed(seed)  # 注释掉CUDA相关代码
+    # torch.cuda.manual_seed_all(seed)  # 注释掉CUDA相关代码
     np.random.seed(seed)
-    cudnn.benchmark = False
-    cudnn.deterministic = True
+    # cudnn.benchmark = False  # 注释掉CUDA相关代码
+    # cudnn.deterministic = True  # 注释掉CUDA相关代码
     random.seed(seed)
 
     state_dim = env.observation_space.shape[0]
@@ -133,9 +133,14 @@ def experiment(variant):
         
         print("max_ep_len",max_ep_len)
         model_type = variant.get('model_type', 'simple')
+        
+        # 使用轨迹数据中的状态维度，而不是环境的状态维度
+        trajectory_state_dim = trajectories[0]['observations'].shape[1]
+        print(f"Debug: trajectory_state_dim: {trajectory_state_dim}, env_state_dim: {state_dim}")
+        
         if model_type == "transformer":
             model = TransformerActor(
-                state_dim=state_dim,
+                state_dim=trajectory_state_dim,  # 使用轨迹数据的状态维度
                 act_dim=act_dim,
                 max_length=u,
                 max_ep_len=max_ep_len,
@@ -151,7 +156,7 @@ def experiment(variant):
                 )
         else:
             model = SimpleTransformerActor(
-                state_dim=state_dim,
+                state_dim=trajectory_state_dim,  # 使用轨迹数据的状态维度
                 act_dim=act_dim,
                 hidden_size=variant['embed_dim'],
                 max_length=u
@@ -162,7 +167,7 @@ def experiment(variant):
 
         episode_return, episode_length,total_trade_count = eval_test(
             env,
-            state_dim,
+            trajectory_state_dim,  # 使用轨迹数据的状态维度
             act_dim,
             model,
             max_ep_len=max_ep_len,
@@ -224,7 +229,7 @@ if __name__ == '__main__':
     parser.add_argument('--n_head', type=int, default=4)
     parser.add_argument('--dropout', type=float, default=0.1)
     parser.add_argument('--activation_function', type=str, default='relu')
-    parser.add_argument('--device', type=str, default='cuda')
+    parser.add_argument('--device', type=str, default='mps')
     parser.add_argument('--mode', type=str, default='tacr')
     parser.add_argument('--model_type', type=str, default='simple')
     parser.add_argument('--test_set', type=str, default='trade')

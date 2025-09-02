@@ -8,12 +8,14 @@ from tqdm import tqdm
 from .critic import Critic
 from .value_net import ValueNet
 
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
+# 移除硬编码的device变量，改为在初始化时传入
+# device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 class Trainer:
 
-    def __init__(self, model, optimizer, batch_size, get_batch, state_dim, action_dim, state_mean,state_std, alpha, crtic_lr, loss_fn=None,scheduler=None, eval_fns=None,mode=None):
+    def __init__(self, model, optimizer, batch_size, get_batch, state_dim, action_dim, state_mean,state_std, alpha, crtic_lr, loss_fn=None,scheduler=None, eval_fns=None,mode=None, device='cpu'):
 
+        self.device = device
         self.optimizer = optimizer
         self.batch_size = batch_size
         self.get_batch = get_batch
@@ -28,10 +30,10 @@ class Trainer:
         self.total_it = 0
 
         # Algorithm 1, line1, line2 : Initialize actor and critic weights
-        self.actor = model
-        self.actor_target = copy.deepcopy(self.actor)
+        self.actor = model.to(device)  # 将actor移动到指定设备
+        self.actor_target = copy.deepcopy(self.actor).to(device)  # 确保target也在同一设备
         self.critic = Critic(state_dim, action_dim).to(device)
-        self.critic_target = copy.deepcopy(self.critic)
+        self.critic_target = copy.deepcopy(self.critic).to(device)
         self.critic_optimizer = torch.optim.Adam(self.critic.parameters(), lr=crtic_lr)
 
         self.discount = 0.99    # Q-learning discount factor
@@ -48,6 +50,7 @@ class Trainer:
 
         self.start_time = time.time()
         print("model train mode: ", self.mode)
+        print(f"All models moved to device: {device}")
 
     def train_iteration(self, num_steps, iter_num=0, print_logs=False):
 
