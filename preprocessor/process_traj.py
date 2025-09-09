@@ -45,23 +45,23 @@ class trajectory:
         #     self.data[tech]
         #     for tech in self.tech_indicator_list
         # ]
-        
+        self.last_pos = 0
         delta_close = self.data.close - self.data.close_60_sma
         self.state = [
-            delta_close,
+            delta_close,self.last_pos
         ]
         
         print("process_traj state: ", self.state)
         self.terminal = False
         self.last_day_memory = self.data
-        self.last_pos = 0
+        
 
     def step(self, i):
         # print(self.day)
         self.terminal = self.day >= len(self.df.index.unique()) - 1
         # print(actions)
         if self.terminal:
-            return self.state, self.reward, self.terminal, np.array([0.0, 1.0, 0.0]),0,0
+            return self.state, self.reward, self.terminal,np.array([0.0, 1.0, 0.0]),0,0,0
 
         else:
             
@@ -77,9 +77,9 @@ class trajectory:
                     for tech in self.tech_indicator_list
                 ]
             
-            delta_close = self.data.close - self.data.close_60_sma
+            delta_close = (self.data.close - self.data.close_60_sma)/self.data.close_60_sma
             self.state = [
-                delta_close,
+                delta_close,self.last_pos
             ]
             
             # print(self.state)
@@ -132,7 +132,7 @@ class trajectory:
             
             # print(f"portfolio_return: {portfolio_return}")
         # print("state: ", self.state)
-        return self.state, self.reward, self.terminal, action, trade_count,portfolio_return_nofee
+        return self.state, self.reward, self.terminal, action,pos,trade_count,portfolio_return_nofee
 
 
     def reset(self):
@@ -148,9 +148,9 @@ class trajectory:
         #     for tech in self.tech_indicator_list
         # ]
         
-        delta_close = self.data.close - self.data.close_60_sma
+        delta_close = (self.data.close - self.data.close_60_sma)/self.data.close_60_sma
         self.state = [
-            delta_close,
+            delta_close,0
         ]
         
         print("process_traj reset state: ", self.state)
