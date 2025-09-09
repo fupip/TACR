@@ -8,6 +8,7 @@ from preprocessor.process_traj import trajectory
 import numpy as np
 import pickle
 import os
+import json
 from csi_data import get_csi_stock_data
 def create_data(variant):
     #Create datasets
@@ -274,9 +275,22 @@ def create_data(variant):
         pickle.dump(test_paths, f)
     print(f"Saved testing trajectories: {test_name}.pkl")
     
-    # 在此处添加保存为csv的轨迹
-    train_paths[0].to_csv("trajectory/"+variant["dataset"]+"_train_traj.csv")
-    test_paths[0].to_csv("trajectory/"+variant["dataset"]+"_test_traj.csv")
+    
+    print(train_paths[0])
+    print(test_paths[0])
+    
+    # 在此处保存为 JSON 便于查看
+    def _traj_to_jsonable(traj_dict):
+        return {k: (v.tolist() if isinstance(v, np.ndarray) else v) for k, v in traj_dict.items()}
+
+    train_json_path = "trajectory/"+variant["dataset"]+"_train_traj.json"
+    test_json_path = "trajectory/"+variant["dataset"]+"_test_traj.json"
+    with open(train_json_path, 'w', encoding='utf-8') as f:
+        json.dump(_traj_to_jsonable(train_paths[0]), f, ensure_ascii=False, indent=2)
+    with open(test_json_path, 'w', encoding='utf-8') as f:
+        json.dump(_traj_to_jsonable(test_paths[0]), f, ensure_ascii=False, indent=2)
+    print(f"Saved training trajectories JSON: {train_json_path}")
+    print(f"Saved testing trajectories JSON: {test_json_path}")
     
     
 
