@@ -199,19 +199,27 @@ def create_data(variant):
     train_paths = []
     # for i in range(12):
     # MA策略生成轨迹
-    i = 2  # 指定轨迹使用MA 策略2
-    traj,total_reward = traj_generator(train_env, i)
-    if total_reward > 0.10:
-        print(f"[{i}] total_reward: {total_reward}")
-        train_paths.append(traj)
+    # i = 2  # 指定轨迹使用MA 策略2
+    # traj,total_reward = traj_generator(train_env, i)
+    # if total_reward > 0.10:
+    #     print(f"[{i}] total_reward: {total_reward}")
+    #     train_paths.append(traj)
     
     # Huric策略生成轨迹
-    huric_train_env = trajectory(df=train, dataset=variant['dataset'], strategy_name='huric', **env_kwargs)
-    huric_i = 0  # HURIC 策略强度/配置索引
-    huric_traj, huric_total_reward = traj_generator(huric_train_env, huric_i)
+    # huric_train_env = trajectory(df=train, dataset=variant['dataset'], strategy_name='huric', **env_kwargs)
+    # huric_i = 0  # HURIC 策略强度/配置索引
+    # huric_traj, huric_total_reward = traj_generator(huric_train_env, huric_i)
 
-    print(f"[HURIC {huric_i}] total_reward: {huric_total_reward}")
-    train_paths.append(huric_traj)
+    # print(f"[HURIC {huric_i}] total_reward: {huric_total_reward}")
+    # train_paths.append(huric_traj)
+    
+    
+    # 添加最简策略
+    nano_train_env = trajectory(df=train, dataset=variant['dataset'], strategy_name='nano', **env_kwargs)
+    nano_i = 0  # NANO 策略强度/配置索引
+    nano_traj, nano_total_reward = traj_generator(nano_train_env, nano_i)
+    print(f"[NANO {nano_i}] total_reward: {nano_total_reward}")
+    train_paths.append(nano_traj)
     
     
     
@@ -227,18 +235,26 @@ def create_data(variant):
     test_paths = []
     # 使用相同的策略生成测试轨迹
     # MA策略生成轨迹
-    i = 2  # 指定轨迹使用MA 策略2
-    traj,total_reward = traj_generator(trade_env, i)
+    # i = 2  # 指定轨迹使用MA 策略2
+    # traj,total_reward = traj_generator(trade_env, i)
 
-    print(f"[{i}] total_reward: {total_reward}")
-    test_paths.append(traj)
+    # print(f"[{i}] total_reward: {total_reward}")
+    # test_paths.append(traj)
 
-    # Huric策略生成测试轨迹
-    huric_test_env = trajectory(df=trade, dataset=variant['dataset'], strategy_name='huric', **env_kwargs)
-    huric_i = 0  # HURIC 策略强度/配置索引
-    huric_traj, huric_total_reward = traj_generator(huric_test_env, huric_i)
-    print(f"[HURIC {huric_i}] total_reward: {huric_total_reward}")
-    test_paths.append(huric_traj)
+    # # Huric策略生成测试轨迹
+    # huric_test_env = trajectory(df=trade, dataset=variant['dataset'], strategy_name='huric', **env_kwargs)
+    # huric_i = 0  # HURIC 策略强度/配置索引
+    # huric_traj, huric_total_reward = traj_generator(huric_test_env, huric_i)
+    # print(f"[HURIC {huric_i}] total_reward: {huric_total_reward}")
+    # test_paths.append(huric_traj)
+    
+    
+    # Nano策略生成测试轨迹
+    nano_test_env = trajectory(df=trade, dataset=variant['dataset'], strategy_name='nano', **env_kwargs)
+    nano_i = 0  # NANO 策略强度/配置索引
+    nano_traj, nano_total_reward = traj_generator(nano_test_env, nano_i)
+    print(f"[NANO {nano_i}] total_reward: {nano_total_reward}")
+    test_paths.append(nano_traj)
 
     print(f"total testing paths: {len(test_paths)}")
     
@@ -257,6 +273,12 @@ def create_data(variant):
     with open(f'{test_name}.pkl', 'wb') as f:
         pickle.dump(test_paths, f)
     print(f"Saved testing trajectories: {test_name}.pkl")
+    
+    # 在此处添加保存为csv的轨迹
+    train_paths[0].to_csv("trajectory/"+variant["dataset"]+"_train_traj.csv")
+    test_paths[0].to_csv("trajectory/"+variant["dataset"]+"_test_traj.csv")
+    
+    
 
     print("=" * 50)
     print(f"Created training trajectories: {len(train_paths)}")

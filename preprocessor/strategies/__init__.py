@@ -7,7 +7,8 @@ from .base_strategy import BaseStrategy
 from .ma_strategy import MovingAverageStrategy
 from .momentum_strategy import MomentumStrategy
 from .random_strategy import RandomStrategy
-from .huric_straegy import HuricStrategy
+from .huric_strategy import HuricStrategy
+from .nano_strategy import NanoStrategy
 
 
 # Strategy factory function for easy strategy creation
@@ -28,6 +29,7 @@ def create_strategy(strategy_name, strategy_id=0, **kwargs):
         'momentum': MomentumStrategy,
         'random': RandomStrategy,
         'huric': HuricStrategy,
+        'nano': NanoStrategy,
     }
     
     if strategy_name not in strategies:
@@ -43,5 +45,6 @@ __all__ = [
     'MomentumStrategy',
     'RandomStrategy',
     'HuricStrategy',
+    'NanoStrategy',
     'create_strategy'
 ]
