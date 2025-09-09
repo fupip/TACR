@@ -36,16 +36,22 @@ class trajectory:
         self.strategy = None  # 将在step方法中根据i参数创建
 
         self.data = self.df.loc[self.day, :]
+        # self.state = [
+        #         self.data.open_z,
+        #         self.data.high_z,
+        #         self.data.low_z,
+        #         self.data.close_z,
+        # ] + [
+        #     self.data[tech]
+        #     for tech in self.tech_indicator_list
+        # ]
+        
+        delta_close = self.data.close - self.data.close_60_sma
         self.state = [
-                self.data.open_z,
-                self.data.high_z,
-                self.data.low_z,
-                self.data.close_z,
-        ] + [
-            self.data[tech]
-            for tech in self.tech_indicator_list
+            delta_close,
         ]
-        print("state: ", self.state)
+        
+        print("process_traj state: ", self.state)
         self.terminal = False
         self.last_day_memory = self.data
         self.last_pos = 0
@@ -70,6 +76,11 @@ class trajectory:
                     self.data[tech]
                     for tech in self.tech_indicator_list
                 ]
+            
+            delta_close = self.data.close - self.data.close_60_sma
+            self.state = [
+                delta_close,
+            ]
             
             # print(self.state)
             # self.terminal = True
@@ -127,15 +138,22 @@ class trajectory:
     def reset(self):
         self.day = 0
         self.data = self.df.loc[self.day, :]
+        # self.state = [
+        #         self.data.open_z,
+        #         self.data.high_z,
+        #         self.data.low_z,
+        #         self.data.close_z,
+        # ] + [
+        #     self.data[tech]
+        #     for tech in self.tech_indicator_list
+        # ]
+        
+        delta_close = self.data.close - self.data.close_60_sma
         self.state = [
-                self.data.open_z,
-                self.data.high_z,
-                self.data.low_z,
-                self.data.close_z,
-        ] + [
-            self.data[tech]
-            for tech in self.tech_indicator_list
+            delta_close,
         ]
+        
+        print("process_traj reset state: ", self.state)
         self.terminal = False
         return self.state
 

@@ -274,10 +274,7 @@ def create_data(variant):
     with open(f'{test_name}.pkl', 'wb') as f:
         pickle.dump(test_paths, f)
     print(f"Saved testing trajectories: {test_name}.pkl")
-    
-    
-    print(train_paths[0])
-    print(test_paths[0])
+
     
     # 在此处保存为 JSON 便于查看
     def _traj_to_jsonable(traj_dict):
