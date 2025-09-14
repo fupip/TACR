@@ -45,7 +45,10 @@ class NanoStrategy(BaseStrategy):
             action = self.pos_to_action[self.pos_state]
         
         
-        
+        # print("delta_from_ma60: ", delta_from_ma60)
+        # print("out position: ", position)
+        # print("out action: ", action)
+        # print("--------------------------------")
         return position, action
     
     

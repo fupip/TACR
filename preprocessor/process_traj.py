@@ -64,23 +64,24 @@ class trajectory:
             return self.state, self.reward, self.terminal,np.array([0.0, 1.0, 0.0]),0,0,0
 
         else:
-            
+            # print("#### self.day",self.day)
             self.data = self.df.loc[self.day, :]
-            
-            self.state = [
-                self.data.open_z,
-                self.data.high_z,
-                self.data.low_z,
-                self.data.close_z,
-                ] + [
-                    self.data[tech]
-                    for tech in self.tech_indicator_list
-                ]
+            self.state = self.data
+            # print("#### self.data",self.data)
+            # self.state = [
+            #     self.data.open_z,
+            #     self.data.high_z,
+            #     self.data.low_z,
+            #     self.data.close_z,
+            #     ] + [
+            #         self.data[tech]
+            #         for tech in self.tech_indicator_list
+            #     ]
             
             delta_close = (self.data.close - self.data.close_60_sma)/self.data.close_60_sma
-            self.state = [
-                delta_close,self.last_pos
-            ]
+            # self.state = [
+            #     delta_close,self.last_pos
+            # ]
             
             # print(self.state)
             # self.terminal = True
@@ -131,6 +132,16 @@ class trajectory:
             self.reward = portfolio_return_with_fee
             
             # print(f"portfolio_return: {portfolio_return}")
+        # 在推进到下一天后，重算“下一时刻”的 state 并返回
+
+        delta_close_next = (self.data.close - self.last_day_memory.close_60_sma)/self.last_day_memory.close_60_sma if hasattr(self.last_day_memory, 'close_60_sma') else (self.data.close - self.last_day_memory.close)
+        # 更稳妥地用当前 self.data 计算
+        delta_close_next = (self.data.close - self.data.close_60_sma)/self.data.close_60_sma
+        self.state = [
+            delta_close_next, self.last_pos
+        ]
+        # 更新终止标记到新的一天
+        self.terminal = self.day >= len(self.df.index.unique()) - 1
         # print("state: ", self.state)
         return self.state, self.reward, self.terminal, action,pos,trade_count,portfolio_return_nofee
 

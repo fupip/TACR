@@ -157,9 +157,10 @@ def create_data(variant):
         returns_nofees= []
         while True:
             # stats ,reward,terminal,weights
-            next_state, reward, new, action,pos,trade_count,return_nofee = env.step(episode)
+            next_state, reward, terminal, action,pos,trade_count,return_nofee = env.step(episode)
             obs.append(ob)
-            term.append(new)
+            # print("-------- ob",ob,"next_state",next_state)
+            term.append(terminal)
             acs.append(action)
             poss.append(pos)
             
@@ -169,7 +170,7 @@ def create_data(variant):
             total_trade_count += trade_count
             ob = next_state
 
-            if new:
+            if terminal:
                 break
 
         obs = np.array(obs)
@@ -195,6 +196,8 @@ def create_data(variant):
         print("total_reward",total_reward)
         print("total_trade_count",total_trade_count)
         print("total_real_fee",total_real_fee)
+        
+        # 合成trajectory
         traj = {"observations": obs, "rewards": rews, "dones": term, "actions": acs,"positions": poss}
         
         return traj,total_reward
@@ -223,6 +226,7 @@ def create_data(variant):
     
     
     # 添加最简策略
+    # train = train.iloc[:10].reset_index(drop=True)
     nano_train_env = trajectory(df=train, dataset=variant['dataset'], strategy_name='nano', **env_kwargs)
     nano_i = 0  # NANO 策略强度/配置索引
     nano_traj, nano_total_reward = traj_generator(nano_train_env, nano_i)
@@ -234,7 +238,7 @@ def create_data(variant):
     
 
     print(f"total training paths: {len(train_paths)}")
-    
+
     # 生成测试轨迹
     print("=" * 50)
     print("Generating testing trajectories...")
