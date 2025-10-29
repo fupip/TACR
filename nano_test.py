@@ -9,6 +9,7 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader, TensorDataset
 import pandas as pd
+from datetime import datetime
 
 
 def set_seed(seed: int) -> None:
@@ -261,6 +262,68 @@ def evaluate_trading_from_predictions(
     }
 
 
+def evaluate_model_on_test(
+    model: nn.Module,
+    dataset: str,
+    batch_size: int = 256,
+    label_source: str = "actions",
+) -> dict:
+    """Run inference on Test split and print trading metrics. Returns metrics dict."""
+    device = next(model.parameters()).device if any(True for _ in model.parameters()) else torch.device("cpu")
+    # Load test features/labels
+    _, _, X_test, y_test = load_traj(dataset, label_source=label_source)
+    test_ds = TensorDataset(torch.from_numpy(X_test), torch.from_numpy(y_test))
+    test_loader = DataLoader(test_ds, batch_size=batch_size, shuffle=False, drop_last=False)
+
+    model.eval()
+    with torch.no_grad():
+        all_y_pred = []
+        for xb, _ in test_loader:
+            xb = xb.to(device)
+            logits = model(xb)
+            all_y_pred.append(logits.argmax(dim=1).cpu().numpy())
+    y_pred_np = np.concatenate(all_y_pred, axis=0) if len(all_y_pred) > 0 else np.array([], dtype=np.int64)
+
+    close_test = load_split_close_series(dataset, split="test")
+    trade_metrics = evaluate_trading_from_predictions(y_pred_np, close_test, transaction_cost=0.001)
+    print("Test Trading:")
+    print(f"  trade_count  : {trade_metrics['trade_count']}")
+    print(f"  total_return : {trade_metrics['total_return']:.4f}")
+    print(f"  final_amount : {trade_metrics['final_amount']:.2f}")
+    print(f"  total_fee    : {trade_metrics['total_fee']:.2f}")
+
+    return trade_metrics
+
+
+def load_saved_model(model_path: str, device: torch.device) -> Tuple[nn.Module, dict]:
+    """Load a saved Logit model checkpoint and rebuild the model."""
+    ckpt = torch.load(model_path, map_location=device)
+    input_dim = int(ckpt.get("input_dim", 1))
+    num_classes = int(ckpt.get("num_classes", 3))
+    model = Logit(input_dim=input_dim, num_classes=num_classes).to(device)
+    model.load_state_dict(ckpt["state_dict"])
+    return model, ckpt
+
+
+def find_latest_model(dataset: str, search_dir: str = "results") -> str:
+    """Find latest saved model for a dataset in search_dir."""
+    if not os.path.isdir(search_dir):
+        return ""
+    candidates = []
+    for name in os.listdir(search_dir):
+        if name.startswith(f"logit_{dataset}_") and name.endswith(".pt"):
+            path = os.path.join(search_dir, name)
+            try:
+                mtime = os.path.getmtime(path)
+            except Exception:
+                mtime = 0
+            candidates.append((mtime, path))
+    if not candidates:
+        return ""
+    candidates.sort()
+    return candidates[-1][1]
+
+
 def train_and_eval(
     dataset: str = "csi",
     epochs: int = 10,
@@ -376,6 +439,28 @@ def train_and_eval(
     print(f"  final_amount : {trade_metrics['final_amount']:.2f}")
     print(f"  total_fee    : {trade_metrics['total_fee']:.2f}")
 
+    # Save trained model
+    os.makedirs("results", exist_ok=True)
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    model_path = os.path.join("results", f"logit_{dataset}_{timestamp}.pt")
+    torch.save(
+        {
+            "state_dict": model.state_dict(),
+            "input_dim": input_dim,
+            "num_classes": 3,
+            "dataset": dataset,
+            "created_at": timestamp,
+            "epochs": epochs,
+            "lr": lr,
+            "l2": l2,
+            "seed": seed,
+        },
+        model_path,
+    )
+    print(f"Saved model to: {model_path}")
+
+    return model_path
+
 
 def main() -> None:
     parser = argparse.ArgumentParser()
@@ -395,9 +480,11 @@ def main() -> None:
                         help="Which split to evaluate for baseline")
     parser.add_argument("--debug-transfers", type=int, default=0,
                         help="Print first N transfer events with deltas and preds (baseline mode)")
+    parser.add_argument("--test-only", action="store_true", help="Only run test evaluation using a saved model")
+    parser.add_argument("--model-path", type=str, default="", help="Path to saved model .pt; if empty, auto-pick latest")
     args = parser.parse_args()
 
-    if args.baseline:
+    if args.baseline: 
         # Load data (only need X and y for evaluation)
         X_train, y_train, X_test, y_test = load_traj(
             args.dataset, label_source=args.label_source
@@ -478,15 +565,24 @@ def main() -> None:
                 debug_split("Test", delta_test, test_traj, args.debug_transfers)
         return
     else:
-        train_and_eval(
-            dataset=args.dataset,
-            epochs=args.epochs,
-            batch_size=args.batch_size,
-            lr=args.lr,
-            l2=args.l2,
-            seed=args.seed,
-            label_source=args.label_source,
-        )
+        if args.test_only:
+            device = torch.device("mps" if torch.mps.is_available() else "cpu")
+            model_path = args.model_path or find_latest_model(args.dataset)
+            if not model_path or not os.path.exists(model_path):
+                raise FileNotFoundError("No model found. Provide --model-path or train first.")
+            print(f"Loading model from: {model_path}")
+            model, _ = load_saved_model(model_path, device)
+            evaluate_model_on_test(model, dataset=args.dataset, batch_size=args.batch_size, label_source=args.label_source)
+        else:
+            saved_path = train_and_eval(
+                dataset=args.dataset,
+                epochs=args.epochs,
+                batch_size=args.batch_size,
+                lr=args.lr,
+                l2=args.l2,
+                seed=args.seed,
+                label_source=args.label_source,
+            )
 
 
 if __name__ == "__main__":
